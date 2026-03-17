@@ -96,12 +96,12 @@ export function TestCasesList({ refreshTrigger }: TestCasesListProps) {
       <div className="p-6 space-y-4">
         <div className="flex gap-4 flex-wrap">
           <div className="w-40">
-            <Select value={sprint} onValueChange={setSprint}>
+            <Select value={sprint || 'all'} onValueChange={(value) => setSprint(value === 'all' ? '' : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Filtrar por Sprint" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas as Sprints</SelectItem>
+                <SelectItem value="all">Todas as Sprints</SelectItem>
                 <SelectItem value="Sprint 1">Sprint 1</SelectItem>
                 <SelectItem value="Sprint 2">Sprint 2</SelectItem>
                 <SelectItem value="Sprint 3">Sprint 3</SelectItem>
@@ -110,12 +110,12 @@ export function TestCasesList({ refreshTrigger }: TestCasesListProps) {
           </div>
 
           <div className="w-40">
-            <Select value={status} onValueChange={setStatus}>
+            <Select value={status || 'all'} onValueChange={(value) => setStatus(value === 'all' ? '' : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Filtrar por Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os Status</SelectItem>
+                <SelectItem value="all">Todos os Status</SelectItem>
                 <SelectItem value="Rascunho">Rascunho</SelectItem>
                 <SelectItem value="Em Andamento">Em Andamento</SelectItem>
                 <SelectItem value="Aprovado">Aprovado</SelectItem>
@@ -125,12 +125,12 @@ export function TestCasesList({ refreshTrigger }: TestCasesListProps) {
           </div>
 
           <div className="w-40">
-            <Select value={periodo} onValueChange={setPeriodo}>
+            <Select value={periodo || 'all'} onValueChange={(value) => setPeriodo(value === 'all' ? '' : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Período" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="7dias">Últimos 7 dias</SelectItem>
                 <SelectItem value="30dias">Últimos 30 dias</SelectItem>
                 <SelectItem value="90dias">Últimos 90 dias</SelectItem>
