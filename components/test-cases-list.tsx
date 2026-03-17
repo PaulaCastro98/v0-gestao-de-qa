@@ -72,7 +72,7 @@ export function TestCasesList({ refreshTrigger }: TestCasesListProps) {
     }
   }
 
-  const handleDelete = async (id: string) => {
+  const deleteTestCase = async (id: string) => {
     if (!confirm('Tem certeza que deseja deletar este caso?')) return
 
     try {
@@ -205,7 +205,7 @@ export function TestCasesList({ refreshTrigger }: TestCasesListProps) {
                           variant="ghost"
                           size="sm"
                           title="Deletar"
-                          onClick={() => handleDelete(testCase.id)}
+                          onClick={() => deleteTestCase(testCase.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
