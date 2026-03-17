@@ -72,7 +72,7 @@ export function TestCasesList({ refreshTrigger }: TestCasesListProps) {
     }
   }
 
-  const handleDelete = async (id: string) {
+  const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja deletar este caso?')) return
 
     try {
