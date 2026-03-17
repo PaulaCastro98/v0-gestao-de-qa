@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import { TestCaseForm } from '@/components/test-case-form'
 import { TestCasesList } from '@/components/test-cases-list'
 import { MetricsDashboard } from '@/components/metrics-dashboard'
+import Navbar from '@/components/navbar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { BarChart3, ClipboardList } from 'lucide-react'
 
@@ -12,7 +13,9 @@ export const metadata: Metadata = {
 
 export default function CasosTestePage() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -48,5 +51,6 @@ export default function CasosTestePage() {
         </Tabs>
       </div>
     </main>
+    </>
   )
 }
