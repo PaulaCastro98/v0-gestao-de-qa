@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const sprint = searchParams.get('sprint')
-    const status = searchParams.get('status')
+    const statusTeste = searchParams.get('status')
     const periodo = searchParams.get('periodo')
 
     let query = 'SELECT * FROM test_cases WHERE 1=1'
@@ -18,9 +18,9 @@ export async function GET(request: NextRequest) {
       params.push(sprint)
     }
 
-    if (status) {
-      query += ' AND status = $' + (params.length + 1)
-      params.push(status)
+    if (statusTeste) {
+      query += ' AND status_teste = $' + (params.length + 1)
+      params.push(statusTeste)
     }
 
     if (periodo) {
@@ -35,11 +35,11 @@ export async function GET(request: NextRequest) {
         dataInicio.setDate(hoje.getDate() - 90)
       }
 
-      query += ' AND data_criacao >= $' + (params.length + 1)
+      query += ' AND created_at >= $' + (params.length + 1)
       params.push(dataInicio.toISOString())
     }
 
-    query += ' ORDER BY data_criacao DESC'
+    query += ' ORDER BY created_at DESC'
 
     const testCases = await sql(query, params)
     return NextResponse.json(testCases)
@@ -56,51 +56,59 @@ export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
     const {
-      titulo,
-      descricao,
-      modulo,
+      titulo_tc,
+      descricao_objetivo,
       sprint,
-      prioridade,
+      prioridade_teste,
       passos,
       resultado_esperado,
-      resultado_atual,
-      ambiente,
-      status,
-      analista,
-      notas,
+      tipo_teste,
+      ambiente_teste,
+      status_teste,
+      qa_responsavel,
+      observacoes_adicionais,
+      historia_git,
+      link_hu_git,
+      pre_condicoes,
+      requisitos,
+      desenvolvedor_responsavel,
     } = data
 
     const resultado = await sql`
       INSERT INTO test_cases (
-        titulo,
-        descricao,
-        modulo,
+        titulo_tc,
+        descricao_objetivo,
         sprint,
-        prioridade,
+        prioridade_teste,
         passos,
         resultado_esperado,
-        resultado_atual,
-        ambiente,
-        status,
-        analista,
-        notas,
-        data_criacao,
-        data_atualizacao
+        tipo_teste,
+        ambiente_teste,
+        status_teste,
+        qa_responsavel,
+        observacoes_adicionais,
+        historia_git,
+        link_hu_git,
+        pre_condicoes,
+        requisitos,
+        desenvolvedor_responsavel
       ) VALUES (
-        ${titulo},
-        ${descricao},
-        ${modulo},
+        ${titulo_tc},
+        ${descricao_objetivo},
         ${sprint},
-        ${prioridade},
+        ${prioridade_teste},
         ${passos},
         ${resultado_esperado},
-        ${resultado_atual},
-        ${ambiente},
-        ${status},
-        ${analista},
-        ${notas},
-        NOW(),
-        NOW()
+        ${tipo_teste},
+        ${ambiente_teste},
+        ${status_teste},
+        ${qa_responsavel},
+        ${observacoes_adicionais},
+        ${historia_git},
+        ${link_hu_git},
+        ${pre_condicoes},
+        ${requisitos},
+        ${desenvolvedor_responsavel}
       )
       RETURNING *
     `

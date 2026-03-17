@@ -37,36 +37,44 @@ export async function PUT(
     const data = await request.json()
 
     const {
-      titulo,
-      descricao,
-      modulo,
+      titulo_tc,
+      descricao_objetivo,
       sprint,
-      prioridade,
+      prioridade_teste,
       passos,
       resultado_esperado,
-      resultado_atual,
-      ambiente,
-      status,
-      analista,
-      notas,
+      tipo_teste,
+      ambiente_teste,
+      status_teste,
+      qa_responsavel,
+      observacoes_adicionais,
+      historia_git,
+      link_hu_git,
+      pre_condicoes,
+      requisitos,
+      desenvolvedor_responsavel,
     } = data
 
     const resultado = await sql`
       UPDATE test_cases
       SET
-        titulo = ${titulo},
-        descricao = ${descricao},
-        modulo = ${modulo},
+        titulo_tc = ${titulo_tc},
+        descricao_objetivo = ${descricao_objetivo},
         sprint = ${sprint},
-        prioridade = ${prioridade},
+        prioridade_teste = ${prioridade_teste},
         passos = ${passos},
         resultado_esperado = ${resultado_esperado},
-        resultado_atual = ${resultado_atual},
-        ambiente = ${ambiente},
-        status = ${status},
-        analista = ${analista},
-        notas = ${notas},
-        data_atualizacao = NOW()
+        tipo_teste = ${tipo_teste},
+        ambiente_teste = ${ambiente_teste},
+        status_teste = ${status_teste},
+        qa_responsavel = ${qa_responsavel},
+        observacoes_adicionais = ${observacoes_adicionais},
+        historia_git = ${historia_git},
+        link_hu_git = ${link_hu_git},
+        pre_condicoes = ${pre_condicoes},
+        requisitos = ${requisitos},
+        desenvolvedor_responsavel = ${desenvolvedor_responsavel},
+        updated_at = NOW()
       WHERE id = ${id}
       RETURNING *
     `
