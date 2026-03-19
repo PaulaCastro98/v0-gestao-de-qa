@@ -6,10 +6,10 @@ const sql = neon(process.env.DATABASE_URL!)
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, nome_completo } = await request.json()
+    const { email, password, nome } = await request.json()
 
     // Validar entrada
-    if (!email || !password || !nome_completo) {
+    if (!email || !password || !nome) {
       return NextResponse.json(
         { error: 'Email, senha e nome são obrigatórios' },
         { status: 400 }
@@ -30,9 +30,9 @@ export async function POST(request: NextRequest) {
 
     // Criar usuário
     const usuario = await sql`
-      INSERT INTO users (email, password_hash, name)
-      VALUES (${email}, ${passwordHash}, ${nome_completo})
-      RETURNING id, email, name
+      INSERT INTO users (email, password_hash, nome, ativo, created_at, updated_at)
+      VALUES (${email}, ${passwordHash}, ${nome}, true, NOW(), NOW())
+      RETURNING id, email, nome
     `
 
     // Criar sessão

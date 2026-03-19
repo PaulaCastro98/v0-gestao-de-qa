@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/card'
 import { FieldGroup, Field, FieldLabel } from '@/components/ui/field'
 
 export default function RegisterPage() {
-  const [nome_completo, setNome] = useState('')
+  const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -32,7 +32,7 @@ export default function RegisterPage() {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, nome_completo }),
+        body: JSON.stringify({ email, password, nome }),
       })
 
       if (!response.ok) {
@@ -72,7 +72,7 @@ export default function RegisterPage() {
                 <Input
                   type="text"
                   placeholder="Seu nome"
-                  value={nome_completo}
+                  value={nome}
                   onChange={(e) => setNome(e.target.value)}
                   required
                 />
