@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
 import { hashPassword, generateSessionToken } from '@/lib/auth'
 
+// Conexão com banco Neon
 const sql = neon(process.env.DATABASE_URL!)
 
 export async function POST(request: NextRequest) {
