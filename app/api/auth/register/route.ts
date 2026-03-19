@@ -30,9 +30,9 @@ export async function POST(request: NextRequest) {
 
     // Criar usuário
     const usuario = await sql`
-      INSERT INTO users (email, password_hash, nome_completo)
+      INSERT INTO users (email, password_hash, name)
       VALUES (${email}, ${passwordHash}, ${nome_completo})
-      RETURNING id, email, nome_completo
+      RETURNING id, email, name
     `
 
     // Criar sessão
