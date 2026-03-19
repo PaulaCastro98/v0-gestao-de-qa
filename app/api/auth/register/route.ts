@@ -2,14 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
 import { hashPassword, generateSessionToken } from '@/lib/auth'
 
-// Conexão com banco Neon
 const sql = neon(process.env.DATABASE_URL!)
 
 export async function POST(request: NextRequest) {
   try {
     const { email, password, nome } = await request.json()
 
-    // Validar entrada
     if (!email || !password || !nome) {
       return NextResponse.json(
         { error: 'Email, senha e nome são obrigatórios' },
@@ -17,7 +15,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar se usuário já existe
     const existingUser = await sql`SELECT id FROM users WHERE email = ${email}`
     if (existingUser.length > 0) {
       return NextResponse.json(
@@ -26,19 +23,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Hash da senha
     const passwordHash = await hashPassword(password)
 
-    // Criar usuário
     const usuario = await sql`
       INSERT INTO users (email, password_hash, nome, ativo, created_at, updated_at)
       VALUES (${email}, ${passwordHash}, ${nome}, true, NOW(), NOW())
       RETURNING id, email, nome
     `
 
-    // Criar sessão
     const token = generateSessionToken()
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 dias
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 
     await sql`
       INSERT INTO sessions (user_id, token, expires_at)
