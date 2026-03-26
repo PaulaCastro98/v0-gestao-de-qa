@@ -13,9 +13,14 @@ export default function Home() {
             <Shield className="h-8 w-8 text-blue-600" />
             <h1 className="text-2xl font-bold text-slate-900">QA Manager</h1>
           </div>
-          <Link href="/login">
-            <Button>Entrar</Button>
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/registro">
+              <Button variant="outline">Cadastrar-se</Button>
+            </Link>
+            <Link href="/login">
+              <Button>Entrar</Button>
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -29,7 +34,10 @@ export default function Home() {
             Gerenciamento completo de casos de teste, rastreamento de defeitos e
             métricas de qualidade para equipes de QA
           </p>
-          <div className="flex justify-center pt-4">
+          <div className="flex justify-center gap-3 pt-4">
+            <Link href="/registro">
+              <Button size="lg" variant="outline">Criar Conta</Button>
+            </Link>
             <Link href="/login">
               <Button size="lg">Acessar Sistema</Button>
             </Link>

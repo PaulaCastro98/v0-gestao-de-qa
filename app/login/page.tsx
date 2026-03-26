@@ -89,13 +89,18 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm">
-            <Link
-              href="/recuperar-senha"
-              className="text-primary hover:underline"
-            >
-              Esqueceu sua senha?
-            </Link>
+          <div className="mt-6 space-y-2 text-center text-sm">
+            <p>
+              <Link href="/recuperar-senha" className="text-primary hover:underline">
+                Esqueceu sua senha?
+              </Link>
+            </p>
+            <p className="text-muted-foreground">
+              Ainda nao tem conta?{' '}
+              <Link href="/registro" className="text-primary hover:underline font-medium">
+                Cadastre-se
+              </Link>
+            </p>
           </div>
         </div>
       </Card>
