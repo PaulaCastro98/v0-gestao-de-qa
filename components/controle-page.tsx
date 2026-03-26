@@ -1,95 +1,70 @@
+// C:\Users\paula.castro\Desktop\projeto-qa\v0-gestao-de-qa\components\controle-page.tsx
 'use client'
 
 import { useState } from 'react'
-import { TestExecutionsList } from './test-executions-list'
-import { ExecutionFormModal } from './execution-form-modal'
+import { TestExecutionsList } from './test-executions-list' // Assumindo named export
+import { ExecutionFormModal } from './execution-form-modal' // Assumindo named export
 import { BarChart3, Activity } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
-interface TestExecution {
-  id: string
-  feature: string
-  historia_git: string
-  story_points: number
-  sprint: string
-  status_hu: string
-  tc_id: string
-  tipo_teste: string
-  status_teste: string
-  bug_id: string | null
-  criticidade: string
-  ambiente: string
-  insights_qa: string | null
-  automacao: boolean
-  flaky: boolean
-  created_at: string
-  updated_at: string
-}
-
-export default function ControlePage() {
+// Mude de 'export function ControlePage' para 'export default function ControlePage'
+export default function ControlePage() { // <-- AQUI ESTÁ A MUDANÇA
   const [modalOpen, setModalOpen] = useState(false)
-  const [selectedExecution, setSelectedExecution] = useState<TestExecution | undefined>()
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [selectedExecution, setSelectedExecution] = useState<any>(null) // Ajuste o tipo conforme sua interface TestExecution
+  const [refreshKey, setRefreshKey] = useState(0) // Para forçar a atualização da lista
 
-  const handleEdit = (execution: TestExecution) => {
+  const handleNew = () => {
+    setSelectedExecution(null)
+    setModalOpen(true)
+  }
+
+  const handleEdit = (execution: any) => { // Ajuste o tipo conforme sua interface TestExecution
     setSelectedExecution(execution)
     setModalOpen(true)
   }
 
-  const handleNew = () => {
-    setSelectedExecution(undefined)
-    setModalOpen(true)
-  }
-
   const handleSave = () => {
-    setRefreshKey((prev) => prev + 1)
     setModalOpen(false)
+    setRefreshKey((prevKey) => prevKey + 1) // Força a re-renderização da lista
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-4xl font-bold text-slate-900 flex items-center gap-3">
-            <Activity className="w-8 h-8" />
-            Controle de Qualidade QA
-          </h1>
-          <p className="text-slate-600 mt-2">
-            Gestão centralizada de execuções de teste e métricas de qualidade
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <main className="flex-1 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+          {/* Card de Execuções Ativas */}
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total de Execuções
-              </CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Execuções Ativas</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">—</div>
+              <div className="text-2xl font-bold">15</div>
+              <p className="text-xs text-muted-foreground">+20.1% do mês passado</p>
             </CardContent>
           </Card>
 
+          {/* Card de Testes Automatizados */}
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Taxa de Sucesso
-              </CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Testes Automatizados</CardTitle>
+              <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">—%</div>
+              <div className="text-2xl font-bold">80%</div>
+              <p className="text-xs text-muted-foreground">Cobertura atual</p>
             </CardContent>
           </Card>
 
+          {/* Card de Bugs Abertos */}
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Testes Flaky
-              </CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Bugs Abertos</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">—</div>
+              <div className="text-2xl font-bold">5</div>
+              <p className="text-xs text-muted-foreground">Prioridade alta</p>
             </CardContent>
           </Card>
         </div>
