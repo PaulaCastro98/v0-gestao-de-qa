@@ -1,22 +1,17 @@
-// C:\Users\paula.castro\Desktop\projeto-qa\v0-gestao-de-qa\proxy.ts
 import { NextRequest, NextResponse } from 'next/server'
 
-// Alterado: Renomeado de 'middleware' para 'proxy'
 export async function proxy(request: NextRequest) {
   const token = request.cookies.get('auth_token')?.value
   const pathname = request.nextUrl.pathname
 
-  // Rotas protegidas
   const protectedRoutes = ['/casos-teste']
 
-  // Se está tentando acessar rota protegida sem token
   if (protectedRoutes.some((route) => pathname.startsWith(route))) {
     if (!token) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
   }
 
-  // Se está logado e tenta acessar login/registro, redireciona para casos-teste
   if ((pathname === '/login' || pathname === '/registro') && token) {
     return NextResponse.redirect(new URL('/casos-teste', request.url))
   }

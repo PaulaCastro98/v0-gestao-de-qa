@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     // Buscar dados do usuário
     const usuarios = await sql`
-      SELECT id, email, nome_completo FROM users 
+      SELECT id, email, nome FROM users 
       WHERE id = ${sessions[0].user_id}
     `
 

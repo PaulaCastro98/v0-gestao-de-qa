@@ -14,7 +14,7 @@ import {
 interface User {
   id: string
   email: string
-  nome_completo: string
+  nome: string
 }
 
 export default function Navbar() {
@@ -74,7 +74,7 @@ export default function Navbar() {
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">{user.nome_completo}</Button>
+              <Button variant="outline">{user.nome}</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem disabled>
