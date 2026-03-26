@@ -1,6 +1,8 @@
+// C:\Users\paula.castro\Desktop\projeto-qa\v0-gestao-de-qa\proxy.ts
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+// Alterado: Renomeado de 'middleware' para 'proxy'
+export async function proxy(request: NextRequest) {
   const token = request.cookies.get('auth_token')?.value
   const pathname = request.nextUrl.pathname
 
