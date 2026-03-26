@@ -91,17 +91,14 @@ export default function LoginPage() {
 
           <div className="mt-6 space-y-2 text-center text-sm">
             <p>
-              <Link
-                href="/recuperar-senha"
-                className="text-primary hover:underline"
-              >
+              <Link href="/recuperar-senha" className="text-primary hover:underline">
                 Esqueceu sua senha?
               </Link>
             </p>
-            <p>
-              Não tem conta?{' '}
-              <Link href="/registro" className="text-primary hover:underline">
-                Registre-se
+            <p className="text-muted-foreground">
+              Ainda nao tem conta?{' '}
+              <Link href="/registro" className="text-primary hover:underline font-medium">
+                Cadastre-se
               </Link>
             </p>
           </div>

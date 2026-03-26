@@ -9,7 +9,6 @@ import { Card } from '@/components/ui/card'
 import { FieldGroup, Field, FieldLabel } from '@/components/ui/field'
 
 export default function RegisterPage() {
-  // Alterado: Usando 'nome' em vez de 'nome_completo' para o estado
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -33,7 +32,6 @@ export default function RegisterPage() {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // Alterado: Enviando 'nome' no corpo da requisição
         body: JSON.stringify({ email, password, nome }),
       })
 
@@ -74,9 +72,7 @@ export default function RegisterPage() {
                 <Input
                   type="text"
                   placeholder="Seu nome"
-                  // Alterado: Usando 'nome' para o valor do input
                   value={nome}
-                  // Alterado: Atualizando o estado 'nome'
                   onChange={(e) => setNome(e.target.value)}
                   required
                 />

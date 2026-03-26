@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       {
         id: usuario.id,
         email: usuario.email,
-        nome_completo: usuario.nome_completo,
+        nome: usuario.nome,
       },
       { status: 200 }
     )

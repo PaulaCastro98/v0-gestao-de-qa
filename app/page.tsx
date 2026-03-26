@@ -13,12 +13,12 @@ export default function Home() {
             <Shield className="h-8 w-8 text-blue-600" />
             <h1 className="text-2xl font-bold text-slate-900">QA Manager</h1>
           </div>
-          <div className="flex gap-2">
-            <Link href="/login">
-              <Button variant="outline">Entrar</Button>
-            </Link>
+          <div className="flex items-center gap-3">
             <Link href="/registro">
-              <Button>Criar Conta</Button>
+              <Button variant="outline">Cadastrar-se</Button>
+            </Link>
+            <Link href="/login">
+              <Button>Entrar</Button>
             </Link>
           </div>
         </div>
@@ -34,15 +34,13 @@ export default function Home() {
             Gerenciamento completo de casos de teste, rastreamento de defeitos e
             métricas de qualidade para equipes de QA
           </p>
-          <div className="flex gap-4 justify-center pt-4">
-          <div className="flex gap-2">
-            <Link href="/login">
-              <Button size="lg" variant="outline">Entrar</Button>
-            </Link>
+          <div className="flex justify-center gap-3 pt-4">
             <Link href="/registro">
-              <Button size="lg">Criar Conta</Button>
+              <Button size="lg" variant="outline">Criar Conta</Button>
             </Link>
-          </div>
+            <Link href="/login">
+              <Button size="lg">Acessar Sistema</Button>
+            </Link>
           </div>
         </div>
 
@@ -105,17 +103,12 @@ export default function Home() {
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-12 text-center text-white space-y-4">
           <h3 className="text-3xl font-bold">Pronto para começar?</h3>
           <p className="text-lg text-blue-100">
-            Faça login ou crie uma conta para acessar o sistema
+            Faça login para acessar o sistema de gestão QA
           </p>
-          <div className="flex gap-4 justify-center pt-4">
+          <div className="flex justify-center pt-4">
             <Link href="/login">
               <Button size="lg" variant="secondary">
-                Entrar
-              </Button>
-            </Link>
-            <Link href="/registro">
-              <Button size="lg" variant="secondary">
-                Criar Conta
+                Acessar Sistema
               </Button>
             </Link>
           </div>
