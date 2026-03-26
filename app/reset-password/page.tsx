@@ -1,6 +1,7 @@
+// C:\Users\paula.castro\Desktop\projeto-qa\v0-gestao-de-qa\app\reset-password\page.tsx
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react' // Adicionado Suspense
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -8,7 +9,9 @@ import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { FieldGroup, Field, FieldLabel } from '@/components/ui/field'
 
-export default function ResetPasswordPage() {
+// Componente principal que contém a lógica e o JSX da página de reset de senha
+// Este componente será envolvido pelo Suspense
+function ResetPasswordContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [token, setToken] = useState('')
@@ -158,5 +161,14 @@ export default function ResetPasswordPage() {
         </div>
       </Card>
     </main>
+  )
+}
+
+// Exportação padrão da página, envolvendo o conteúdo em Suspense
+export default function ResetPasswordPageWrapper() {
+  return (
+    <Suspense fallback={<div>Carregando informações de redefinição...</div>}>
+      <ResetPasswordContent />
+    </Suspense>
   )
 }
