@@ -67,15 +67,15 @@ const initialFormData: Partial<TestExecution> = {
   status_hu: 'To Do',
   tc_id: '',
   titulo_tc: '',
-  tipo_teste: 'E2E',
-  status_teste: 'Not Executed',
+  tipo_teste: 'E2E', // Valor padrão alinhado com o DB
+  status_teste: 'Not Executed', // Valor padrão alinhado com o DB
   resultado_esperado: '',
   passos: '',
   requisitos: '',
   regra: '',
   prioridade_teste: 'Média',
-  criticidade_defeito: '',
-  ambiente: 'Dev',
+  criticidade_defeito: null, // Pode ser null
+  ambiente: 'Dev', // Valor padrão alinhado com o DB
   bug_id: '',
   reaberto: 'Não',
   problemas_historia: '',
@@ -93,78 +93,34 @@ export function ExecutionFormModal({
   execution,
   onSave,
 }: ExecutionFormModalProps) {
-  const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState<Partial<TestExecution>>(initialFormData)
+  const [loading, setLoading] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
 
   useEffect(() => {
-    if (execution) {
-      setFormData(execution)
-    } else {
-      setFormData(initialFormData)
+    if (open) {
+      setFormData(execution || initialFormData)
     }
-  }, [execution, open])
+  }, [open, execution])
 
-  const handleChange = (field: string, value: string | number) => {
+  const handleChange = (field: keyof TestExecution, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!formData.titulo_tc) {
-      toast({
-        title: 'Erro',
-        description: 'O campo Título TC é obrigatório',
-        variant: 'destructive',
-      })
-      return
-    }
-
     setLoading(true)
 
-    // Desestruturar formData para acessar as variáveis diretamente
-    const {
-      feature, historia_git, story_points, sprint, status_hu, tc_id,
-      titulo_tc, tipo_teste, status_teste, resultado_esperado, passos,
-      requisitos, regra, prioridade_teste, criticidade_defeito, ambiente,
-      bug_id, reaberto, problemas_historia, problemas_ux_ui,
-      status_automacao, flaky, observacoes, evidencia_url, assigned_to
-    } = formData
-
-    // Construir o payload com os nomes de campos e tipos corretos para a API
-    const payload: Partial<TestExecution> = {
-      feature: feature === '' ? null : feature,
-      historia_git: historia_git === '' ? null : historia_git,
-      story_points: story_points,
-      sprint: sprint === '' ? null : sprint,
-      status_hu: status_hu,
-      tc_id: tc_id === '' ? null : tc_id,
-      titulo_tc: titulo_tc,
-      tipo_teste: tipo_teste,
-      status_teste: status_teste,
-      resultado_esperado: resultado_esperado === '' ? null : resultado_esperado,
-      passos: passos === '' ? null : passos,
-      requisitos: requisitos === '' ? null : requisitos,
-      regra: regra === '' ? null : regra,
-      prioridade_teste: prioridade_teste,
-      criticidade_defeito: criticidade_defeito === 'none' ? null : criticidade_defeito,
-      ambiente: ambiente,
-      bug_id: bug_id === '' ? null : bug_id,
-      reaberto: reaberto, // Já é string 'Sim'/'Não'
-      problemas_historia: problemas_historia === '' ? null : problemas_historia,
-      problemas_ux_ui: problemas_ux_ui === '' ? null : problemas_ux_ui,
-      status_automacao: status_automacao,
-      flaky: flaky,
-      observacoes: observacoes === '' ? null : observacoes,
-      evidencia_url: evidencia_url === '' ? null : evidencia_url,
-      assigned_to: assigned_to === '' ? null : assigned_to,
-    }
-
     try {
-      const url = execution ? `/api/test-executions/${execution.id}` : '/api/test-executions'
       const method = execution ? 'PUT' : 'POST'
+      const url = execution ? `/api/test-executions/${execution.id}` : '/api/test-executions'
+
+      // Ajuste para garantir que criticidade_defeito seja null se 'none' for selecionado
+      const payload = {
+        ...formData,
+        criticidade_defeito: formData.criticidade_defeito === 'none' ? null : formData.criticidade_defeito,
+      }
 
       const res = await fetch(url, {
         method,
@@ -176,20 +132,29 @@ export function ExecutionFormModal({
 
       if (!res.ok) {
         const errorData = await res.json()
-        throw new Error(errorData.message || 'Erro ao salvar execução de teste')
+        console.error('Erro da API:', errorData)
+        toast({
+          title: 'Erro ao salvar execução',
+          description: errorData.details
+            ? JSON.stringify(errorData.details)
+            : errorData.error || 'Ocorreu um erro inesperado.',
+          variant: 'destructive',
+        })
+        return
       }
 
       toast({
         title: 'Sucesso!',
-        description: `Execução de teste ${execution ? 'atualizada' : 'criada'} com sucesso.`,
+        description: `Execução ${execution ? 'atualizada' : 'criada'} com sucesso.`,
       })
-      onSave() // Chama o callback para atualizar a lista
       onOpenChange(false) // Fecha o modal
-      router.refresh() // Atualiza a página para refletir as mudanças
-    } catch (error: any) {
+      onSave() // Atualiza a lista de execuções
+      router.refresh() // Recarrega a página para buscar os dados atualizados
+    } catch (error) {
+      console.error('Erro ao enviar formulário:', error)
       toast({
         title: 'Erro',
-        description: error.message || 'Ocorreu um erro inesperado.',
+        description: (error as Error).message || 'Ocorreu um erro inesperado.',
         variant: 'destructive',
       })
     } finally {
@@ -203,13 +168,15 @@ export function ExecutionFormModal({
         <DialogHeader>
           <DialogTitle>{execution ? 'Editar Execução de Teste' : 'Nova Execução de Teste'}</DialogTitle>
           <DialogDescription>
-            {execution ? 'Edite os detalhes da execução de teste.' : 'Preencha os detalhes para uma nova execução de teste.'}
+            {execution
+              ? 'Edite os detalhes da execução de teste existente.'
+              : 'Preencha os detalhes para criar uma nova execução de teste.'}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Seção: Informações Básicas */}
+        <form onSubmit={handleSubmit} className="space-y-6 py-4">
+          {/* Seção: Detalhes da História */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Informações Básicas</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Detalhes da História</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="feature">Feature</Label>
@@ -217,7 +184,7 @@ export function ExecutionFormModal({
                   id="feature"
                   value={formData.feature || ''}
                   onChange={(e) => handleChange('feature', e.target.value)}
-                  placeholder="Ex: Login, Cadastro"
+                  placeholder="Ex: Login de Usuário"
                 />
               </div>
               <div className="space-y-2">
@@ -226,7 +193,7 @@ export function ExecutionFormModal({
                   id="historia_git"
                   value={formData.historia_git || ''}
                   onChange={(e) => handleChange('historia_git', e.target.value)}
-                  placeholder="Ex: HU-1234"
+                  placeholder="Ex: US-123"
                 />
               </div>
             </div>
@@ -255,20 +222,21 @@ export function ExecutionFormModal({
               <Label htmlFor="status_hu">Status HU</Label>
               <Select value={formData.status_hu || 'To Do'} onValueChange={(value) => handleChange('status_hu', value)}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Selecione o status da HU" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="To Do">To Do</SelectItem>
                   <SelectItem value="In Progress">In Progress</SelectItem>
                   <SelectItem value="Done">Done</SelectItem>
+                  <SelectItem value="Blocked">Blocked</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          {/* Seção: Detalhes do Teste */}
+          {/* Seção: Detalhes do Caso de Teste */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Detalhes do Teste</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Detalhes do Caso de Teste</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="tc_id">TC ID</Label>
@@ -280,7 +248,7 @@ export function ExecutionFormModal({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="titulo_tc">Título TC <span className="text-red-500">*</span></Label>
+                <Label htmlFor="titulo_tc">Título TC</Label>
                 <Input
                   id="titulo_tc"
                   value={formData.titulo_tc || ''}
@@ -295,14 +263,16 @@ export function ExecutionFormModal({
                 <Label htmlFor="tipo_teste">Tipo de Teste</Label>
                 <Select value={formData.tipo_teste || 'E2E'} onValueChange={(value) => handleChange('tipo_teste', value)}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecione o tipo de teste" />
                   </SelectTrigger>
                   <SelectContent>
+                    {/* ATENÇÃO: Estes valores devem ser EXATAMENTE iguais aos da API e DB */}
                     <SelectItem value="E2E">E2E</SelectItem>
-                    <SelectItem value="Funcional">Funcional</SelectItem>
-                    <SelectItem value="Regressão">Regressão</SelectItem>
-                    <SelectItem value="Performance">Performance</SelectItem>
-                    <SelectItem value="Segurança">Segurança</SelectItem>
+                    <SelectItem value="Unit">Unitário</SelectItem>
+                    <SelectItem value="Integration">Integração</SelectItem>
+                    <SelectItem value="Smoke">Smoke</SelectItem>
+                    <SelectItem value="Regression">Regressão</SelectItem>
+                    <SelectItem value="Exploratory">Exploratório</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -310,14 +280,14 @@ export function ExecutionFormModal({
                 <Label htmlFor="status_teste">Status do Teste</Label>
                 <Select value={formData.status_teste || 'Not Executed'} onValueChange={(value) => handleChange('status_teste', value)}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecione o status" />
                   </SelectTrigger>
                   <SelectContent>
+                    {/* ATENÇÃO: Estes valores devem ser EXATAMENTE iguais aos da API e DB */}
                     <SelectItem value="Not Executed">Não Executado</SelectItem>
-                    <SelectItem value="Passed">Passou</SelectItem>
-                    <SelectItem value="Failed">Falhou</SelectItem>
+                    <SelectItem value="Pass">Passou</SelectItem>
+                    <SelectItem value="Fail">Falhou</SelectItem>
                     <SelectItem value="Blocked">Bloqueado</SelectItem>
-                    <SelectItem value="Skipped">Ignorado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -328,7 +298,6 @@ export function ExecutionFormModal({
                 id="resultado_esperado"
                 value={formData.resultado_esperado || ''}
                 onChange={(e) => handleChange('resultado_esperado', e.target.value)}
-                placeholder="Ex: O usuário deve ser redirecionado para o dashboard."
               />
             </div>
             <div className="space-y-2">
@@ -337,7 +306,6 @@ export function ExecutionFormModal({
                 id="passos"
                 value={formData.passos || ''}
                 onChange={(e) => handleChange('passos', e.target.value)}
-                placeholder="1. Abrir navegador&#10;2. Acessar URL&#10;3. Inserir credenciais"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -347,7 +315,6 @@ export function ExecutionFormModal({
                   id="requisitos"
                   value={formData.requisitos || ''}
                   onChange={(e) => handleChange('requisitos', e.target.value)}
-                  placeholder="Ex: O sistema deve permitir login."
                 />
               </div>
               <div className="space-y-2">
@@ -356,7 +323,6 @@ export function ExecutionFormModal({
                   id="regra"
                   value={formData.regra || ''}
                   onChange={(e) => handleChange('regra', e.target.value)}
-                  placeholder="Ex: Regra de negócio X"
                 />
               </div>
             </div>
@@ -365,7 +331,7 @@ export function ExecutionFormModal({
                 <Label htmlFor="prioridade_teste">Prioridade do Teste</Label>
                 <Select value={formData.prioridade_teste || 'Média'} onValueChange={(value) => handleChange('prioridade_teste', value)}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecione a prioridade" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Baixa">Baixa</SelectItem>
@@ -379,10 +345,10 @@ export function ExecutionFormModal({
                 <Label htmlFor="criticidade_defeito">Criticidade do Defeito</Label>
                 <Select value={formData.criticidade_defeito || 'none'} onValueChange={(value) => handleChange('criticidade_defeito', value)}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecione a criticidade" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Nenhuma</SelectItem>
+                    <SelectItem value="none">Não Aplicável</SelectItem> {/* Valor para enviar null */}
                     <SelectItem value="Baixa">Baixa</SelectItem>
                     <SelectItem value="Média">Média</SelectItem>
                     <SelectItem value="Alta">Alta</SelectItem>
@@ -404,8 +370,10 @@ export function ExecutionFormModal({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    {/* ATENÇÃO: Estes valores devem ser EXATAMENTE iguais aos da API e DB */}
                     <SelectItem value="Dev">Dev</SelectItem>
-                    <SelectItem value="Homologação">Homologação</SelectItem>
+                    <SelectItem value="QA">QA</SelectItem> {/* Adicionado 'QA' */}
+                    <SelectItem value="Staging">Staging</SelectItem> {/* Corrigido para 'Staging' */}
                     <SelectItem value="Produção">Produção</SelectItem>
                   </SelectContent>
                 </Select>

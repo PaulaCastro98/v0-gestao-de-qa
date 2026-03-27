@@ -4,6 +4,7 @@ import { verifyPassword, generateSessionToken } from '@/lib/auth'
 
 const sql = neon(process.env.DATABASE_URL!)
 
+// POST /api/auth/login
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json()
@@ -15,9 +16,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Buscar usuário
-    const usuarios = await sql`SELECT * FROM users WHERE email = ${email}`
-    if (usuarios.length === 0) {
+    // Normalizar email (trim + lowercase)
+    const emailNormalized = String(email).trim().toLowerCase()
+
+    // Debug log temporário (remova em produção)
+    console.log('Login attempt for:', emailNormalized)
+
+    // Buscar usuário (case-insensitive)
+    const usuarios = await sql`
+      SELECT * FROM users WHERE LOWER(email) = ${emailNormalized}
+    `
+
+    if (!usuarios || usuarios.length === 0) {
+      console.log('Login failed: user not found for', emailNormalized)
       return NextResponse.json(
         { error: 'Email ou senha incorretos' },
         { status: 401 }
@@ -26,9 +37,18 @@ export async function POST(request: NextRequest) {
 
     const usuario = usuarios[0]
 
-    // Verificar senha
+    if (!usuario.password_hash) {
+      console.error('Login failed: user has no password_hash', usuario.id)
+      return NextResponse.json(
+        { error: 'Email ou senha incorretos' },
+        { status: 401 }
+      )
+    }
+
+    // Verificar senha (verifyPassword deve retornar boolean)
     const passwordMatch = await verifyPassword(password, usuario.password_hash)
     if (!passwordMatch) {
+      console.log('Login failed: invalid password for', emailNormalized)
       return NextResponse.json(
         { error: 'Email ou senha incorretos' },
         { status: 401 }
