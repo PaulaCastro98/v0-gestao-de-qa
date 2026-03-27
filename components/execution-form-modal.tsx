@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -19,25 +19,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Checkbox } from '@/components/ui/checkbox'
 import { useToast } from '@/hooks/use-toast'
 
 interface TestExecution {
   id: string
-  feature: string
-  historia_git: string
+  feature: string | null
+  historia_git: string | null
   story_points: number
-  sprint: string
+  sprint: string | null
   status_hu: string
-  tc_id: string
+  tc_id: string | null
+  titulo_tc: string
   tipo_teste: string
   status_teste: string
-  bug_id: string | null
-  criticidade: string
+  resultado_esperado: string | null
+  passos: string | null
+  requisitos: string | null
+  regra: string | null
+  prioridade_teste: string
+  criticidade_defeito: string | null
   ambiente: string
-  insights_qa: string | null
-  automacao: boolean
-  flaky: boolean
+  bug_id: string | null
+  reaberto: string
+  problemas_historia: string | null
+  problemas_ux_ui: string | null
+  status_automacao: string
+  flaky: string
+  observacoes: string | null
+  evidencia_url: string | null
+  assigned_to: string | null
 }
 
 interface ExecutionFormModalProps {
@@ -47,6 +57,34 @@ interface ExecutionFormModalProps {
   onSave: () => void
 }
 
+const initialFormData: Partial<TestExecution> = {
+  feature: '',
+  historia_git: '',
+  story_points: 1,
+  sprint: '',
+  status_hu: 'To Do',
+  tc_id: '',
+  titulo_tc: '',
+  tipo_teste: 'E2E',
+  status_teste: 'Not Executed',
+  resultado_esperado: '',
+  passos: '',
+  requisitos: '',
+  regra: '',
+  prioridade_teste: 'Média',
+  criticidade_defeito: '',
+  ambiente: 'Dev',
+  bug_id: '',
+  reaberto: 'Não',
+  problemas_historia: '',
+  problemas_ux_ui: '',
+  status_automacao: 'Não Automatizado',
+  flaky: 'Não',
+  observacoes: '',
+  evidencia_url: '',
+  assigned_to: '',
+}
+
 export function ExecutionFormModal({
   open,
   onOpenChange,
@@ -54,32 +92,33 @@ export function ExecutionFormModal({
   onSave,
 }: ExecutionFormModalProps) {
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState<Partial<TestExecution>>(
-    execution || {
-      feature: '',
-      historia_git: '',
-      story_points: 0,
-      sprint: '',
-      status_hu: '',
-      tc_id: '',
-      tipo_teste: '',
-      status_teste: '',
-      bug_id: '',
-      criticidade: '',
-      ambiente: '',
-      insights_qa: '',
-      automacao: false,
-      flaky: false,
-    }
-  )
+  const [formData, setFormData] = useState<Partial<TestExecution>>(initialFormData)
   const { toast } = useToast()
 
-  const handleChange = (field: string, value: any) => {
+  useEffect(() => {
+    if (execution) {
+      setFormData(execution)
+    } else {
+      setFormData(initialFormData)
+    }
+  }, [execution, open])
+
+  const handleChange = (field: string, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!formData.titulo_tc) {
+      toast({
+        title: 'Erro',
+        description: 'O campo Título TC é obrigatório',
+        variant: 'destructive',
+      })
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -94,7 +133,10 @@ export function ExecutionFormModal({
         body: JSON.stringify(formData),
       })
 
-      if (!response.ok) throw new Error('Erro ao salvar')
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Erro ao salvar')
+      }
 
       toast({
         title: 'Sucesso',
@@ -105,7 +147,7 @@ export function ExecutionFormModal({
     } catch (error) {
       toast({
         title: 'Erro',
-        description: 'Erro ao salvar execução',
+        description: error instanceof Error ? error.message : 'Erro ao salvar execução',
         variant: 'destructive',
       })
     } finally {
@@ -115,7 +157,7 @@ export function ExecutionFormModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {execution ? 'Editar Execução' : 'Nova Execução de Teste'}
@@ -126,176 +168,285 @@ export function ExecutionFormModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+          {/* Seção: Feature / História */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Feature / História</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="feature">Feature</Label>
+                <Input
+                  id="feature"
+                  value={formData.feature || ''}
+                  onChange={(e) => handleChange('feature', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="historia_git">História Git</Label>
+                <Input
+                  id="historia_git"
+                  value={formData.historia_git || ''}
+                  onChange={(e) => handleChange('historia_git', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="story_points">Story Points</Label>
+                <Input
+                  id="story_points"
+                  type="number"
+                  min="1"
+                  value={formData.story_points || 1}
+                  onChange={(e) => handleChange('story_points', parseInt(e.target.value) || 1)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sprint">Sprint</Label>
+                <Input
+                  id="sprint"
+                  value={formData.sprint || ''}
+                  onChange={(e) => handleChange('sprint', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status_hu">Status HU</Label>
+                <Select value={formData.status_hu || 'To Do'} onValueChange={(value) => handleChange('status_hu', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="To Do">To Do</SelectItem>
+                    <SelectItem value="In Progress">In Progress</SelectItem>
+                    <SelectItem value="Done">Done</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="assigned_to">Responsável</Label>
+                <Input
+                  id="assigned_to"
+                  value={formData.assigned_to || ''}
+                  onChange={(e) => handleChange('assigned_to', e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Seção: Caso de Teste */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Caso de Teste</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="tc_id">TC ID</Label>
+                <Input
+                  id="tc_id"
+                  value={formData.tc_id || ''}
+                  onChange={(e) => handleChange('tc_id', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="titulo_tc">Título TC *</Label>
+                <Input
+                  id="titulo_tc"
+                  value={formData.titulo_tc || ''}
+                  onChange={(e) => handleChange('titulo_tc', e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tipo_teste">Tipo de Teste</Label>
+                <Select value={formData.tipo_teste || 'E2E'} onValueChange={(value) => handleChange('tipo_teste', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Unit">Unit</SelectItem>
+                    <SelectItem value="Integration">Integration</SelectItem>
+                    <SelectItem value="E2E">E2E</SelectItem>
+                    <SelectItem value="Smoke">Smoke</SelectItem>
+                    <SelectItem value="Regression">Regression</SelectItem>
+                    <SelectItem value="Exploratory">Exploratory</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status_teste">Status do Teste</Label>
+                <Select value={formData.status_teste || 'Not Executed'} onValueChange={(value) => handleChange('status_teste', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Not Executed">Not Executed</SelectItem>
+                    <SelectItem value="Pass">Pass</SelectItem>
+                    <SelectItem value="Fail">Fail</SelectItem>
+                    <SelectItem value="Blocked">Blocked</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="prioridade_teste">Prioridade</Label>
+                <Select value={formData.prioridade_teste || 'Média'} onValueChange={(value) => handleChange('prioridade_teste', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Baixa">Baixa</SelectItem>
+                    <SelectItem value="Média">Média</SelectItem>
+                    <SelectItem value="Alta">Alta</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="ambiente">Ambiente</Label>
+                <Select value={formData.ambiente || 'Dev'} onValueChange={(value) => handleChange('ambiente', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Dev">Dev</SelectItem>
+                    <SelectItem value="Homolog">Homolog</SelectItem>
+                    <SelectItem value="Produção">Produção</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <div className="space-y-2">
-              <Label htmlFor="feature">Feature</Label>
-              <Input
-                id="feature"
-                value={formData.feature || ''}
-                onChange={(e) => handleChange('feature', e.target.value)}
-                required
+              <Label htmlFor="passos">Passos</Label>
+              <Textarea
+                id="passos"
+                value={formData.passos || ''}
+                onChange={(e) => handleChange('passos', e.target.value)}
+                placeholder="Descreva os passos do teste"
               />
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="historia_git">História Git</Label>
-              <Input
-                id="historia_git"
-                value={formData.historia_git || ''}
-                onChange={(e) => handleChange('historia_git', e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="story_points">Story Points</Label>
-              <Input
-                id="story_points"
-                type="number"
-                value={formData.story_points || 0}
-                onChange={(e) => handleChange('story_points', parseInt(e.target.value))}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="sprint">Sprint</Label>
-              <Input
-                id="sprint"
-                value={formData.sprint || ''}
-                onChange={(e) => handleChange('sprint', e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="tc_id">TC ID</Label>
-              <Input
-                id="tc_id"
-                value={formData.tc_id || ''}
-                onChange={(e) => handleChange('tc_id', e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="status_hu">Status HU</Label>
-              <Select value={formData.status_hu || ''} onValueChange={(value) => handleChange('status_hu', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Aberto">Aberto</SelectItem>
-                  <SelectItem value="Em Progresso">Em Progresso</SelectItem>
-                  <SelectItem value="Concluído">Concluído</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="tipo_teste">Tipo de Teste</Label>
-              <Select value={formData.tipo_teste || ''} onValueChange={(value) => handleChange('tipo_teste', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Funcional">Funcional</SelectItem>
-                  <SelectItem value="Regressão">Regressão</SelectItem>
-                  <SelectItem value="Integração">Integração</SelectItem>
-                  <SelectItem value="Smoke">Smoke</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="status_teste">Status do Teste</Label>
-              <Select value={formData.status_teste || ''} onValueChange={(value) => handleChange('status_teste', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Passou">Passou</SelectItem>
-                  <SelectItem value="Falhou">Falhou</SelectItem>
-                  <SelectItem value="Bloqueado">Bloqueado</SelectItem>
-                  <SelectItem value="Skipped">Skipped</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="criticidade">Criticidade</Label>
-              <Select value={formData.criticidade || ''} onValueChange={(value) => handleChange('criticidade', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Crítica">Crítica</SelectItem>
-                  <SelectItem value="Alta">Alta</SelectItem>
-                  <SelectItem value="Média">Média</SelectItem>
-                  <SelectItem value="Baixa">Baixa</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="ambiente">Ambiente</Label>
-              <Select value={formData.ambiente || ''} onValueChange={(value) => handleChange('ambiente', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="DEV">DEV</SelectItem>
-                  <SelectItem value="QA">QA</SelectItem>
-                  <SelectItem value="STAGING">STAGING</SelectItem>
-                  <SelectItem value="PRODUÇÃO">PRODUÇÃO</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="bug_id">Bug ID</Label>
-              <Input
-                id="bug_id"
-                value={formData.bug_id || ''}
-                onChange={(e) => handleChange('bug_id', e.target.value)}
+              <Label htmlFor="resultado_esperado">Resultado Esperado</Label>
+              <Textarea
+                id="resultado_esperado"
+                value={formData.resultado_esperado || ''}
+                onChange={(e) => handleChange('resultado_esperado', e.target.value)}
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="insights_qa">Insights QA</Label>
-            <Textarea
-              id="insights_qa"
-              value={formData.insights_qa || ''}
-              onChange={(e) => handleChange('insights_qa', e.target.value)}
-              placeholder="Observações e insights da execução"
-            />
+          {/* Seção: Bug */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Bug</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="bug_id">Bug ID</Label>
+                <Input
+                  id="bug_id"
+                  value={formData.bug_id || ''}
+                  onChange={(e) => handleChange('bug_id', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="criticidade_defeito">Criticidade Defeito</Label>
+                <Select value={formData.criticidade_defeito || 'none'} onValueChange={(value) => handleChange('criticidade_defeito', value === 'none' ? '' : value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    <SelectItem value="P0-Crítico">P0-Crítico</SelectItem>
+                    <SelectItem value="P1-Alto">P1-Alto</SelectItem>
+                    <SelectItem value="P2-Médio">P2-Médio</SelectItem>
+                    <SelectItem value="P3-Baixo">P3-Baixo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="reaberto">Reaberto</Label>
+                <Select value={formData.reaberto || 'Não'} onValueChange={(value) => handleChange('reaberto', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Não">Não</SelectItem>
+                    <SelectItem value="Sim">Sim</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
 
-          <div className="flex gap-4">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="automacao"
-                checked={formData.automacao || false}
-                onCheckedChange={(checked) => handleChange('automacao', checked)}
-              />
-              <Label htmlFor="automacao" className="cursor-pointer">
-                Teste Automatizado
-              </Label>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="flaky"
-                checked={formData.flaky || false}
-                onCheckedChange={(checked) => handleChange('flaky', checked)}
-              />
-              <Label htmlFor="flaky" className="cursor-pointer">
-                Teste Flaky
-              </Label>
+          {/* Seção: QA Insights */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">QA Insights</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="problemas_historia">Problemas na História</Label>
+                <Textarea
+                  id="problemas_historia"
+                  value={formData.problemas_historia || ''}
+                  onChange={(e) => handleChange('problemas_historia', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="problemas_ux_ui">Problemas UX/UI</Label>
+                <Textarea
+                  id="problemas_ux_ui"
+                  value={formData.problemas_ux_ui || ''}
+                  onChange={(e) => handleChange('problemas_ux_ui', e.target.value)}
+                />
+              </div>
             </div>
           </div>
 
-          <div className="flex justify-end gap-2">
+          {/* Seção: Automação */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Automação</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="status_automacao">Status Automação</Label>
+                <Select value={formData.status_automacao || 'Não Automatizado'} onValueChange={(value) => handleChange('status_automacao', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Não Automatizado">Não Automatizado</SelectItem>
+                    <SelectItem value="Em Progresso">Em Progresso</SelectItem>
+                    <SelectItem value="Automatizado">Automatizado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="flaky">Flaky</Label>
+                <Select value={formData.flaky || 'Não'} onValueChange={(value) => handleChange('flaky', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Não">Não</SelectItem>
+                    <SelectItem value="Sim">Sim</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {/* Seção: Observações */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Extra</h3>
+            <div className="space-y-2">
+              <Label htmlFor="observacoes">Observações</Label>
+              <Textarea
+                id="observacoes"
+                value={formData.observacoes || ''}
+                onChange={(e) => handleChange('observacoes', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="evidencia_url">URL da Evidência</Label>
+              <Input
+                id="evidencia_url"
+                value={formData.evidencia_url || ''}
+                onChange={(e) => handleChange('evidencia_url', e.target.value)}
+                placeholder="https://..."
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4 border-t">
             <Button
               type="button"
               variant="outline"

@@ -23,20 +23,31 @@ import { useToast } from '@/hooks/use-toast'
 
 interface TestExecution {
   id: string
-  feature: string
-  historia_git: string
+  feature: string | null
+  historia_git: string | null
   story_points: number
-  sprint: string
+  sprint: string | null
   status_hu: string
-  tc_id: string
+  tc_id: string | null
+  titulo_tc: string
   tipo_teste: string
   status_teste: string
-  bug_id: string | null
-  criticidade: string
+  resultado_esperado: string | null
+  passos: string | null
+  requisitos: string | null
+  regra: string | null
+  prioridade_teste: string
+  criticidade_defeito: string | null
   ambiente: string
-  insights_qa: string | null
-  automacao: boolean
-  flaky: boolean
+  bug_id: string | null
+  reaberto: string
+  problemas_historia: string | null
+  problemas_ux_ui: string | null
+  status_automacao: string
+  flaky: string
+  observacoes: string | null
+  evidencia_url: string | null
+  assigned_to: string | null
   created_at: string
   updated_at: string
 }
@@ -47,15 +58,14 @@ interface TestExecutionsListProps {
 }
 
 const statusColors: Record<string, string> = {
-  'Passou': 'bg-green-100 text-green-800',
-  'Falhou': 'bg-red-100 text-red-800',
-  'Bloqueado': 'bg-yellow-100 text-yellow-800',
-  'Skipped': 'bg-gray-100 text-gray-800',
+  'Pass': 'bg-green-100 text-green-800',
+  'Fail': 'bg-red-100 text-red-800',
+  'Blocked': 'bg-yellow-100 text-yellow-800',
+  'Not Executed': 'bg-gray-100 text-gray-800',
 }
 
-const criticidadeColors: Record<string, string> = {
-  'Crítica': 'bg-red-100 text-red-800',
-  'Alta': 'bg-orange-100 text-orange-800',
+const prioridadeColors: Record<string, string> = {
+  'Alta': 'bg-red-100 text-red-800',
   'Média': 'bg-yellow-100 text-yellow-800',
   'Baixa': 'bg-blue-100 text-blue-800',
 }
@@ -82,8 +92,8 @@ export function TestExecutionsList({ onEdit, onNew }: TestExecutionsListProps) {
       const data = await response.json()
       setExecutions(data)
 
-      const uniqueSprints = [...new Set(data.map((e: TestExecution) => e.sprint))]
-      setSprints(uniqueSprints.sort())
+      const uniqueSprints = [...new Set(data.map((e: TestExecution) => e.sprint).filter(Boolean))]
+      setSprints(uniqueSprints.sort() as string[])
     } catch (error) {
       toast({ title: 'Erro', description: 'Erro ao buscar execuções', variant: 'destructive' })
     } finally {
@@ -92,7 +102,7 @@ export function TestExecutionsList({ onEdit, onNew }: TestExecutionsListProps) {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza?')) return
+    if (!confirm('Tem certeza que deseja excluir esta execução?')) return
 
     try {
       const response = await fetch(`/api/test-executions/${id}`, {
@@ -110,37 +120,41 @@ export function TestExecutionsList({ onEdit, onNew }: TestExecutionsListProps) {
 
   const handleExportCSV = () => {
     const headers = [
+      'TC ID',
+      'Título',
       'Feature',
       'História Git',
       'Story Points',
       'Sprint',
       'Status HU',
-      'TC ID',
       'Tipo Teste',
       'Status Teste',
-      'Bug ID',
-      'Criticidade',
+      'Prioridade',
       'Ambiente',
-      'Insights QA',
+      'Bug ID',
+      'Criticidade Defeito',
       'Automação',
       'Flaky',
+      'Responsável',
     ]
 
     const rows = executions.map((e) => [
-      e.feature,
-      e.historia_git,
+      e.tc_id || '',
+      e.titulo_tc,
+      e.feature || '',
+      e.historia_git || '',
       e.story_points,
-      e.sprint,
+      e.sprint || '',
       e.status_hu,
-      e.tc_id,
       e.tipo_teste,
       e.status_teste,
-      e.bug_id || '',
-      e.criticidade,
+      e.prioridade_teste,
       e.ambiente,
-      e.insights_qa || '',
-      e.automacao ? 'Sim' : 'Não',
-      e.flaky ? 'Sim' : 'Não',
+      e.bug_id || '',
+      e.criticidade_defeito || '',
+      e.status_automacao,
+      e.flaky,
+      e.assigned_to || '',
     ])
 
     const csv = [
@@ -162,8 +176,8 @@ export function TestExecutionsList({ onEdit, onNew }: TestExecutionsListProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <Select value={sprint} onValueChange={(value) => setSprint(value === 'all' ? '' : value)}>
-            <SelectTrigger className="w-40">
+          <Select value={sprint || 'all'} onValueChange={(value) => setSprint(value === 'all' ? '' : value)}>
+            <SelectTrigger className="w-48">
               <SelectValue placeholder="Filtrar por Sprint" />
             </SelectTrigger>
             <SelectContent>
@@ -184,48 +198,53 @@ export function TestExecutionsList({ onEdit, onNew }: TestExecutionsListProps) {
           </Button>
           <Button onClick={onNew} size="sm">
             <Plus className="w-4 h-4 mr-2" />
-            Nova Execução
+            Nova Execucao
           </Button>
         </div>
       </div>
 
-      <div className="rounded-lg border overflow-hidden">
+      <div className="rounded-lg border overflow-hidden bg-card">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Feature</TableHead>
-              <TableHead>História</TableHead>
+              <TableHead>TC ID</TableHead>
+              <TableHead>Título</TableHead>
               <TableHead>Sprint</TableHead>
-              <TableHead>Status Teste</TableHead>
-              <TableHead>Criticidade</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Prioridade</TableHead>
               <TableHead>Tipo</TableHead>
+              <TableHead>Ambiente</TableHead>
               <TableHead>Automação</TableHead>
-              <TableHead>Flaky</TableHead>
-              <TableHead>Ações</TableHead>
+              <TableHead className="text-right">Acoes</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
                 <TableCell colSpan={9} className="text-center py-8">
-                  Carregando...
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
+                    Carregando...
+                  </div>
                 </TableCell>
               </TableRow>
             ) : executions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8">
-                  Nenhuma execução registrada
+                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                  Nenhuma execucao registrada. Clique em &quot;Nova Execucao&quot; para comecar.
                 </TableCell>
               </TableRow>
             ) : (
               executions.map((exec) => (
                 <TableRow key={exec.id}>
-                  <TableCell className="font-medium">{exec.feature}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {exec.historia_git}
+                  <TableCell className="font-mono text-sm">{exec.tc_id || '-'}</TableCell>
+                  <TableCell className="font-medium max-w-[200px] truncate">
+                    {exec.titulo_tc}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{exec.sprint}</Badge>
+                    {exec.sprint ? (
+                      <Badge variant="outline">{exec.sprint}</Badge>
+                    ) : '-'}
                   </TableCell>
                   <TableCell>
                     <Badge className={statusColors[exec.status_teste] || 'bg-gray-100'}>
@@ -233,28 +252,36 @@ export function TestExecutionsList({ onEdit, onNew }: TestExecutionsListProps) {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge className={criticidadeColors[exec.criticidade] || 'bg-gray-100'}>
-                      {exec.criticidade}
+                    <Badge className={prioridadeColors[exec.prioridade_teste] || 'bg-gray-100'}>
+                      {exec.prioridade_teste}
                     </Badge>
                   </TableCell>
-                  <TableCell>{exec.tipo_teste}</TableCell>
-                  <TableCell>{exec.automacao ? '✓' : '✗'}</TableCell>
-                  <TableCell>{exec.flaky ? '⚠️' : '✓'}</TableCell>
-                  <TableCell className="flex gap-2">
-                    <Button
-                      onClick={() => onEdit(exec)}
-                      variant="ghost"
-                      size="sm"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      onClick={() => handleDelete(exec.id)}
-                      variant="ghost"
-                      size="sm"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                  <TableCell className="text-sm">{exec.tipo_teste}</TableCell>
+                  <TableCell className="text-sm">{exec.ambiente}</TableCell>
+                  <TableCell>
+                    <Badge variant={exec.status_automacao === 'Automatizado' ? 'default' : 'secondary'}>
+                      {exec.status_automacao === 'Automatizado' ? 'Auto' : 'Manual'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <Button
+                        onClick={() => onEdit(exec)}
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        onClick={() => handleDelete(exec.id)}
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

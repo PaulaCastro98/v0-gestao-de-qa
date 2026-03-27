@@ -1,17 +1,16 @@
 import { Metadata } from 'next'
-import Navbar from '@/components/navbar'
+import Sidebar from '@/components/sidebar'
 import ControlePage from '@/components/controle-page'
 
 export const metadata: Metadata = {
-  title: 'Controle de QA - Sistema de Gestão',
-  description: 'Gestão de execuções de teste e controle de qualidade',
+  title: 'Casos de Teste - QA Manager',
+  description: 'Gestao de execucoes de teste e controle de qualidade',
 }
 
 export default function CasosTestePage() {
   return (
-    <>
-      <Navbar />
+    <Sidebar>
       <ControlePage />
-    </>
+    </Sidebar>
   )
 }
