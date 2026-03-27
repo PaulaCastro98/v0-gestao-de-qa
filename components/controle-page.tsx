@@ -1,3 +1,4 @@
+// C:\Users\paula.castro\Desktop\projeto-qa\v0-gestao-de-qa\components\controle-page.tsx
 'use client'
 
 import { useState } from 'react'
@@ -37,22 +38,22 @@ interface TestExecution {
 
 export default function ControlePage() {
   const [modalOpen, setModalOpen] = useState(false)
-  const [selectedExecution, setSelectedExecution] = useState<TestExecution | undefined>()
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [selectedExecution, setSelectedExecution] = useState<any>(null) // Ajuste o tipo conforme sua interface TestExecution
+  const [refreshKey, setRefreshKey] = useState(0) // Para forçar a atualização da lista
 
-  const handleEdit = (execution: TestExecution) => {
+  const handleNew = () => {
+    setSelectedExecution(null)
+    setModalOpen(true)
+  }
+
+  const handleEdit = (execution: any) => { // Ajuste o tipo conforme sua interface TestExecution
     setSelectedExecution(execution)
     setModalOpen(true)
   }
 
-  const handleNew = () => {
-    setSelectedExecution(undefined)
-    setModalOpen(true)
-  }
-
   const handleSave = () => {
-    setRefreshKey((prev) => prev + 1)
     setModalOpen(false)
+    setRefreshKey((prevKey) => prevKey + 1) // Força a re-renderização da lista
   }
 
   return (

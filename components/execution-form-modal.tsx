@@ -1,3 +1,4 @@
+// C:\Users\paula.castro\Desktop\projeto-qa\v0-gestao-de-qa\components\execution-form-modal.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -21,6 +22,7 @@ import {
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 
+// Definição da interface para a execução de teste (ALINHADA COM O SCHEMA DO DB)
 interface TestExecution {
   id: string
   feature: string | null
@@ -53,8 +55,8 @@ interface TestExecution {
 interface ExecutionFormModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  execution?: TestExecution
-  onSave: () => void
+  execution?: TestExecution // Para edição
+  onSave: () => void // Callback para quando uma execução é salva
 }
 
 const initialFormData: Partial<TestExecution> = {
@@ -94,6 +96,7 @@ export function ExecutionFormModal({
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState<Partial<TestExecution>>(initialFormData)
   const { toast } = useToast()
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (execution) {
@@ -121,6 +124,31 @@ export function ExecutionFormModal({
 
     setLoading(true)
 
+    // Construir o payload com os nomes de campos e tipos corretos para a API
+    const payload: Partial<TestExecution> = {
+      feature: feature === '' ? null : feature,
+      historia_git: historiaGit === '' ? null : historiaGit,
+      story_points: storyPoints,
+      sprint: sprint === '' ? null : sprint,
+      status_hu: statusHu,
+      tc_id: tcId === '' ? null : tcId,
+      titulo_tc: tituloTc, // NOVO, OBRIGATÓRIO
+      tipo_teste: tipoTeste,
+      status_teste: statusTeste,
+      prioridade_teste: prioridadeTeste, // NOVO, OBRIGATÓRIO
+      // Mapeia 'none' de volta para null para a API
+      criticidade_defeito: criticidadeDefeito === 'none' ? null : criticidadeDefeito,
+      ambiente: ambiente, // JÁ DEVE ESTAR EM MAIÚSCULAS
+      bug_id: bugId === '' ? null : bugId,
+      reaberto: reaberto ? 'Sim' : 'Não', // Converte boolean para 'Sim'/'Não'
+      status_automacao: statusAutomacao, // NOVO, OBRIGATÓRIO
+      flaky: flaky ? 'Sim' : 'Não', // Converte boolean para 'Sim'/'Não'
+      observacoes: observacoes === '' ? null : observacoes, // Mapeado de insights_qa
+    }
+
+    // ADICIONADO PARA DEPURAR O PAYLOAD FINAL
+    console.log('Payload enviado do frontend (detalhado):', payload);
+
     try {
       const url = execution
         ? `/api/test-executions/${execution.id}`
@@ -130,7 +158,7 @@ export function ExecutionFormModal({
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload), // Envia o payload construído
       })
 
       if (!response.ok) {
@@ -144,7 +172,9 @@ export function ExecutionFormModal({
       })
       onOpenChange(false)
       onSave()
-    } catch (error) {
+      router.refresh() // Atualiza a página após salvar
+    } catch (error: any) {
+      console.error('Erro ao salvar execução:', error)
       toast({
         title: 'Erro',
         description: error instanceof Error ? error.message : 'Erro ao salvar execução',
@@ -159,11 +189,9 @@ export function ExecutionFormModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {execution ? 'Editar Execução' : 'Nova Execução de Teste'}
-          </DialogTitle>
+          <DialogTitle>{execution ? 'Editar Execução de Teste' : 'Nova Execução de Teste'}</DialogTitle>
           <DialogDescription>
-            Preencha os dados da execução de teste
+            Preencha os detalhes da execução do teste. Clique em salvar quando terminar.
           </DialogDescription>
         </DialogHeader>
 

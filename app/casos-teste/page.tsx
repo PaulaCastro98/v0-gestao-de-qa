@@ -1,3 +1,4 @@
+// C:\Users\paula.castro\Desktop\projeto-qa\v0-gestao-de-qa\app\casos-teste\page.tsx
 import { Metadata } from 'next'
 import Sidebar from '@/components/sidebar'
 import ControlePage from '@/components/controle-page'
