@@ -1,17 +1,17 @@
 // C:\Users\paula.castro\Desktop\projeto-qa\v0-gestao-de-qa\app\casos-teste\page.tsx
 import { Metadata } from 'next'
 import Sidebar from '@/components/sidebar'
-import ControlePage from '@/components/controle-page'
+import { CasosTestePage } from '@/components/casos-teste-page'
 
 export const metadata: Metadata = {
   title: 'Casos de Teste - QA Manager',
-  description: 'Gestao de execucoes de teste e controle de qualidade',
+  description: 'Gerenciamento de casos de teste',
 }
 
-export default function CasosTestePage() {
+export default function Page() {
   return (
     <Sidebar>
-      <ControlePage />
+      <CasosTestePage />
     </Sidebar>
   )
 }

@@ -11,21 +11,25 @@ import {
   X,
   ChevronLeft,
   User,
+  BookOpen,
+  Bug,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
-
-interface UserData {
-  id: string
-  email: string
-  nome: string
-}
 
 const menuItems = [
+  {
+    label: 'Histórias',
+    href: '/historias',
+    icon: BookOpen,
+  },
   {
     label: 'Casos de Teste',
     href: '/casos-teste',
     icon: ClipboardList,
+  },
+  {
+    label: 'Bugs',
+    href: '/bugs',
+    icon: Bug,
   },
   {
     label: 'Dashboard',
