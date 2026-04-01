@@ -9,7 +9,7 @@ const sql = neon(process.env.DATABASE_URL!)
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json()
-    console.log('[v0] Login attempt:', email)
+    console.log('[Login API] Tentativa de login para:', email)
 
     if (!email || !password) {
       return NextResponse.json(
@@ -18,12 +18,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Buscar usuário
-    const usuarios = await sql`SELECT * FROM users WHERE email = ${email}`
-    console.log('[v0] User lookup:', usuarios.length > 0 ? 'Found' : 'Not found')
     // Buscar usuário, incluindo o campo que armazena o hash da senha (assumindo 'password_hash')
-    const usuarios = await sql`SELECT id, email, nome, password_hash FROM users WHERE email = ${email}` // <sources>[1,2,3]</sources>
+    const usuarios = await sql`SELECT id, email, nome, password_hash FROM users WHERE email = ${email}`
+
     if (usuarios.length === 0) {
+      console.log('[Login API] Email não encontrado:', email)
       return NextResponse.json(
         { error: 'Email ou senha incorretos' },
         { status: 401 }
@@ -33,21 +32,18 @@ export async function POST(request: NextRequest) {
     const usuario = usuarios[0]
 
     if (!usuario.password_hash) {
-      console.error('Login failed: user has no password_hash', usuario.id)
+      console.error('[Login API] Erro: Usuário sem password_hash registrado:', usuario.id)
       return NextResponse.json(
         { error: 'Email ou senha incorretos' },
         { status: 401 }
       )
     }
 
-    // Verificar senha (verifyPassword deve retornar boolean)
-    const passwordMatch = await verifyPassword(password, usuario.password_hash)
-    console.log('[v0] Password match:', passwordMatch)
     // Verificar senha usando o hash completo (hash:salt) armazenado
-    // 'usuario.password_hash' deve conter o valor no formato "hash:salt"
-    const passwordMatch = await verifyPassword(password, usuario.password_hash) // <sources>[1,2,3]</sources>
+    const passwordMatch = await verifyPassword(password, usuario.password_hash)
+
     if (!passwordMatch) {
-      console.log('Login failed: invalid password for', emailNormalized)
+      console.log('[Login API] Senha incorreta para:', email)
       return NextResponse.json(
         { error: 'Email ou senha incorretos' },
         { status: 401 }
@@ -55,7 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Criar sessão
-    const token = generateSessionToken()
+    const token = generateSessionToken(usuario.id) // Passa o ID do usuário para o token
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 dias de expiração
 
     // Inserir a sessão no banco de dados
@@ -64,8 +60,7 @@ export async function POST(request: NextRequest) {
       INSERT INTO sessions (user_id, token, expires_at)
       VALUES (${usuario.id}, ${token}, ${expiresAt})
     `
-    console.log('[v0] Session created for user:', usuario.id)
-    ` // <sources>[1,2,3]</sources>
+    console.log('[Login API] Sessão criada para o usuário:', usuario.id)
 
     const response = NextResponse.json(
       {
@@ -85,12 +80,12 @@ export async function POST(request: NextRequest) {
       path: '/',
     })
 
-    console.log('[v0] Login successful:', email)
+    console.log('[Login API] Login bem-sucedido para:', email)
     return response
   } catch (error) {
-    console.error('[v0] Erro ao fazer login:', error)
+    console.error('[Login API] Erro ao fazer login:', error)
     return NextResponse.json(
-      { error: 'Erro ao fazer login' },
+      { error: 'Erro interno do servidor ao fazer login' }, // Mensagem mais genérica para o cliente
       { status: 500 }
     )
   }
