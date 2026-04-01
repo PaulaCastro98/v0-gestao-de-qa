@@ -1,25 +1,30 @@
+// lib/auth.ts
 import * as crypto from 'crypto'
 
 export async function hashPassword(password: string): Promise<string> {
-  // Using PBKDF2 with crypto module (built-in to Node.js)
   return new Promise((resolve, reject) => {
-    crypto.pbkdf2(password, crypto.randomBytes(16).toString('hex'), 100000, 64, 'sha512', (err, derivedKey) => {
+    const salt = crypto.randomBytes(16).toString('hex'); // Gerar o salt
+    crypto.pbkdf2(password, salt, 100000, 64, 'sha512', (err, derivedKey) => {
       if (err) reject(err)
-      resolve(derivedKey.toString('hex'))
+      resolve(`${derivedKey.toString('hex')}:${salt}`) // Retornar hash:salt
     })
   })
 }
 
-export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  // For simplicity, using a basic comparison
-  // In production, use bcrypt library
-  const [hashPart, saltPart] = hash.split(':')
-  if (!hashPart || !saltPart) return false
-  
+
+export async function verifyPassword(password: string, combinedHashAndSalt: string): Promise<boolean> {
+  // combinedHashAndSalt agora deve estar no formato "hash:salt"
+  const [storedHash, storedSalt] = combinedHashAndSalt.split(':')
+
+  if (!storedHash || !storedSalt) {
+    console.error('Formato de hash inválido: esperado "hash:salt"')
+    return false
+  }
+
   return new Promise((resolve, reject) => {
-    crypto.pbkdf2(password, saltPart, 100000, 64, 'sha512', (err, derivedKey) => {
+    crypto.pbkdf2(password, storedSalt, 100000, 64, 'sha512', (err, derivedKey) => {
       if (err) reject(err)
-      resolve(derivedKey.toString('hex') === hashPart)
+      resolve(derivedKey.toString('hex') === storedHash)
     })
   })
 }

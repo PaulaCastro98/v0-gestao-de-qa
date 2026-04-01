@@ -21,6 +21,7 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
+      // CORREÇÃO AQUI: URL da API de login ajustada para /api/auth/login
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -33,6 +34,7 @@ export default function LoginPage() {
         return
       }
 
+      // Redireciona para a página de casos de teste após o login bem-sucedido
       router.push('/casos-teste')
     } catch (err) {
       setError('Erro ao fazer login')

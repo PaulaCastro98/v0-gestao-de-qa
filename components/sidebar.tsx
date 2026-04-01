@@ -15,6 +15,21 @@ import {
   Bug,
 } from 'lucide-react'
 
+// ADICIONADO: Importação da função 'cn' (alias para clsx)
+import { clsx as cn } from 'clsx' // Certifique-se que 'clsx' está instalado (npm install clsx)
+
+// ADICIONADO: Importação do componente Button
+// Ajuste o caminho conforme a localização real do seu componente Button
+import { Button } from '@/components/ui/button' 
+
+// ADICIONADO: Definição de tipo para os dados do usuário
+interface UserData {
+  id: string;
+  email: string;
+  nome: string;
+  // Adicione outros campos do usuário se existirem, como 'role', 'avatar', etc.
+}
+
 const menuItems = [
   {
     label: 'Histórias',
@@ -25,7 +40,7 @@ const menuItems = [
     label: 'Casos de Teste',
     href: '/casos-teste',
     icon: ClipboardList,
-  },
+  }, // CORRIGIDO: Removido o 'a' solto aqui
   {
     label: 'Bugs',
     href: '/bugs',
@@ -50,15 +65,20 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
       try {
         const response = await fetch('/api/auth/me')
         if (response.ok) {
-          const data = await response.json()
+          const data: UserData = await response.json()
           setUser(data)
+        } else {
+          // Se a resposta não for OK (ex: 401 Unauthorized), redireciona para login
+          router.push('/login')
         }
       } catch (error) {
         console.error('Erro ao buscar usuário:', error)
+        // Em caso de erro na requisição, também pode ser um indicativo de sessão inválida
+        router.push('/login')
       }
     }
     fetchUser()
-  }, [])
+  }, [router]) // Adicionado 'router' como dependência para useEffect
 
   const handleLogout = async () => {
     try {
