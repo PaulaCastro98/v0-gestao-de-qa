@@ -1,4 +1,8 @@
--- Deletar usuários antigos para começar limpo
+-- Limpar todas as tabelas respeitando foreign keys
+DELETE FROM evidencias WHERE TRUE;
+DELETE FROM bugs WHERE TRUE;
+DELETE FROM casos_teste WHERE TRUE;
+DELETE FROM historias WHERE TRUE;
 DELETE FROM sessions WHERE TRUE;
 DELETE FROM password_reset_tokens WHERE TRUE;
 DELETE FROM users WHERE TRUE;
