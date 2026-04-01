@@ -4,6 +4,7 @@ import { verifyPassword, generateSessionToken } from '@/lib/auth'
 
 const sql = neon(process.env.DATABASE_URL!)
 
+// POST /api/auth/login
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json()
@@ -28,10 +29,19 @@ export async function POST(request: NextRequest) {
 
     const usuario = usuarios[0]
 
-    // Verificar senha
+    if (!usuario.password_hash) {
+      console.error('Login failed: user has no password_hash', usuario.id)
+      return NextResponse.json(
+        { error: 'Email ou senha incorretos' },
+        { status: 401 }
+      )
+    }
+
+    // Verificar senha (verifyPassword deve retornar boolean)
     const passwordMatch = await verifyPassword(password, usuario.password_hash)
     console.log('[v0] Password match:', passwordMatch)
     if (!passwordMatch) {
+      console.log('Login failed: invalid password for', emailNormalized)
       return NextResponse.json(
         { error: 'Email ou senha incorretos' },
         { status: 401 }
