@@ -1,6 +1,12 @@
 // lib/auth.ts
 import * as crypto from 'crypto'
 
+// Parâmetros PBKDF2 (devem ser consistentes entre hash e verify)
+const PBKDF2_ITERATIONS = 100000;
+const PBKDF2_KEYLEN = 64; // 64 bytes = 512 bits
+const PBKDF2_DIGEST = 'sha512';
+const SALT_BYTES = 16; // 16 bytes para o salt
+
 export async function hashPassword(password: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const salt = crypto.randomBytes(16).toString('hex'); // Gerar o salt

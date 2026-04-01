@@ -27,6 +27,7 @@ export default function RegisterPage() {
     }
 
     setLoading(true)
+    console.log('[v0] Starting registration with:', { email, nome })
 
     try {
       const response = await fetch('/api/auth/register', {
@@ -35,16 +36,21 @@ export default function RegisterPage() {
         body: JSON.stringify({ email, password, nome }),
       })
 
+      console.log('[v0] Register response status:', response.status)
+
       if (!response.ok) {
         const data = await response.json()
+        console.log('[v0] Register error:', data)
         setError(data.error || 'Erro ao registrar')
         return
       }
 
+      const userData = await response.json()
+      console.log('[v0] Register success:', userData)
       router.push('/casos-teste')
     } catch (err) {
       setError('Erro ao registrar')
-      console.error(err)
+      console.error('[v0] Register exception:', err)
     } finally {
       setLoading(false)
     }

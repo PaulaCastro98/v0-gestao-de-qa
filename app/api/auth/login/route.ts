@@ -5,9 +5,11 @@ import { verifyPassword, generateSessionToken } from '@/lib/auth' // Certifique-
 
 const sql = neon(process.env.DATABASE_URL!)
 
+// POST /api/auth/login
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json()
+    console.log('[v0] Login attempt:', email)
 
     if (!email || !password) {
       return NextResponse.json(
@@ -16,6 +18,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Buscar usuário
+    const usuarios = await sql`SELECT * FROM users WHERE email = ${email}`
+    console.log('[v0] User lookup:', usuarios.length > 0 ? 'Found' : 'Not found')
     // Buscar usuário, incluindo o campo que armazena o hash da senha (assumindo 'password_hash')
     const usuarios = await sql`SELECT id, email, nome, password_hash FROM users WHERE email = ${email}` // <sources>[1,2,3]</sources>
     if (usuarios.length === 0) {
@@ -27,10 +32,22 @@ export async function POST(request: NextRequest) {
 
     const usuario = usuarios[0]
 
+    if (!usuario.password_hash) {
+      console.error('Login failed: user has no password_hash', usuario.id)
+      return NextResponse.json(
+        { error: 'Email ou senha incorretos' },
+        { status: 401 }
+      )
+    }
+
+    // Verificar senha (verifyPassword deve retornar boolean)
+    const passwordMatch = await verifyPassword(password, usuario.password_hash)
+    console.log('[v0] Password match:', passwordMatch)
     // Verificar senha usando o hash completo (hash:salt) armazenado
     // 'usuario.password_hash' deve conter o valor no formato "hash:salt"
     const passwordMatch = await verifyPassword(password, usuario.password_hash) // <sources>[1,2,3]</sources>
     if (!passwordMatch) {
+      console.log('Login failed: invalid password for', emailNormalized)
       return NextResponse.json(
         { error: 'Email ou senha incorretos' },
         { status: 401 }
@@ -46,6 +63,8 @@ export async function POST(request: NextRequest) {
     await sql`
       INSERT INTO sessions (user_id, token, expires_at)
       VALUES (${usuario.id}, ${token}, ${expiresAt})
+    `
+    console.log('[v0] Session created for user:', usuario.id)
     ` // <sources>[1,2,3]</sources>
 
     const response = NextResponse.json(
@@ -66,9 +85,10 @@ export async function POST(request: NextRequest) {
       path: '/',
     })
 
+    console.log('[v0] Login successful:', email)
     return response
   } catch (error) {
-    console.error('Erro ao fazer login:', error)
+    console.error('[v0] Erro ao fazer login:', error)
     return NextResponse.json(
       { error: 'Erro ao fazer login' },
       { status: 500 }
