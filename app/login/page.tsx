@@ -19,24 +19,30 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
+    console.log('[v0] Login attempt with email:', email)
 
     try {
+      // CORREÇÃO AQUI: URL da API de login ajustada para /api/auth/login
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       })
 
+      console.log('[v0] Login response status:', response.status)
+
       if (!response.ok) {
         const data = await response.json()
+        console.log('[v0] Login error:', data)
         setError(data.error || 'Erro ao fazer login')
         return
       }
 
+      // Redireciona para a página de casos de teste após o login bem-sucedido
       router.push('/casos-teste')
     } catch (err) {
       setError('Erro ao fazer login')
-      console.error(err)
+      console.error('[v0] Login exception:', err)
     } finally {
       setLoading(false)
     }

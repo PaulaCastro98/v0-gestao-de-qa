@@ -4,7 +4,7 @@ export async function proxy(request: NextRequest) {
   const token = request.cookies.get('auth_token')?.value
   const pathname = request.nextUrl.pathname
 
-  const protectedRoutes = ['/casos-teste', '/dashboard']
+  const protectedRoutes = ['/casos-teste', '/dashboard', '/historias', '/bugs']
 
   if (protectedRoutes.some((route) => pathname.startsWith(route))) {
     if (!token) {
@@ -20,5 +20,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/casos-teste/:path*', '/dashboard/:path*', '/login', '/registro'],
+  matcher: ['/casos-teste/:path*', '/dashboard/:path*', '/historias/:path*', '/bugs/:path*', '/login', '/registro'],
 }

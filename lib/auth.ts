@@ -1,3 +1,4 @@
+// lib/auth.ts
 import * as crypto from 'crypto'
 
 // Parâmetros PBKDF2 (devem ser consistentes entre hash e verify)
@@ -8,41 +9,30 @@ const SALT_BYTES = 16; // 16 bytes para o salt
 
 export async function hashPassword(password: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    // Gerar um salt único para cada senha
-    crypto.randomBytes(SALT_BYTES, (err, saltBuffer) => {
-      if (err) return reject(err);
-
-      const salt = saltBuffer.toString('hex'); // Converter o salt para string hexadecimal
-
-      crypto.pbkdf2(password, salt, PBKDF2_ITERATIONS, PBKDF2_KEYLEN, PBKDF2_DIGEST, (err, derivedKey) => {
-        if (err) reject(err);
-        // Retornar o salt e o hash combinados, separados por um delimitador
-        resolve(`${salt}:${derivedKey.toString('hex')}`);
-      });
-    });
-  });
+    const salt = crypto.randomBytes(16).toString('hex'); // Gerar o salt
+    crypto.pbkdf2(password, salt, 100000, 64, 'sha512', (err, derivedKey) => {
+      if (err) reject(err)
+      resolve(`${derivedKey.toString('hex')}:${salt}`) // Retornar hash:salt
+    })
+  })
 }
 
-export async function verifyPassword(password: string, storedCombinedHash: string): Promise<boolean> {
-  return new Promise((resolve, reject) => {
-    // Extrair o salt e o hash original da string combinada armazenada
-    const parts = storedCombinedHash.split(':');
-    if (parts.length !== 2) {
-      // Formato inválido do hash armazenado
-      return resolve(false);
-    }
-    const salt = parts[0];
-    const originalHash = parts[1];
 
-    // Re-derivar a chave usando a senha fornecida e o salt armazenado
-    crypto.pbkdf2(password, salt, PBKDF2_ITERATIONS, PBKDF2_KEYLEN, PBKDF2_DIGEST, (err, derivedKey) => {
-      if (err) reject(err);
-      // Comparar o hash recém-derivado com o hash original armazenado
-      // É crucial usar uma comparação de tempo constante (timingSafeEqual) em produção para evitar ataques de tempo
-      // Para simplicidade aqui, usamos ===, mas timingSafeEqual é recomendado para segurança máxima.
-      resolve(derivedKey.toString('hex') === originalHash);
-    });
-  });
+export async function verifyPassword(password: string, combinedHashAndSalt: string): Promise<boolean> {
+  // combinedHashAndSalt agora deve estar no formato "hash:salt"
+  const [storedHash, storedSalt] = combinedHashAndSalt.split(':')
+
+  if (!storedHash || !storedSalt) {
+    console.error('Formato de hash inválido: esperado "hash:salt"')
+    return false
+  }
+
+  return new Promise((resolve, reject) => {
+    crypto.pbkdf2(password, storedSalt, 100000, 64, 'sha512', (err, derivedKey) => {
+      if (err) reject(err)
+      resolve(derivedKey.toString('hex') === storedHash)
+    })
+  })
 }
 
 export function generateResetToken(): string {
