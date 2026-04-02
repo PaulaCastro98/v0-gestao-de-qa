@@ -1,15 +1,15 @@
 import { Metadata } from 'next'
 import SidebarNew from '@/components/sidebar-new'
-import DashboardPage from '@/components/pages/dashboard-page'
+import MetricasPage from '@/components/pages/metricas-page'
 
 export const metadata: Metadata = {
-  title: 'Dashboard - QA Manager',
+  title: 'Métricas - QA Manager',
 }
 
 export default function Page() {
   return (
     <SidebarNew>
-      <DashboardPage />
+      <MetricasPage />
     </SidebarNew>
   )
 }
