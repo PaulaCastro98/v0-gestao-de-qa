@@ -29,7 +29,19 @@ export function CardDetailModal({ card, open, onOpenChange, onUpdate, onDelete }
 
   const handleSave = async () => {
     try {
-      await onUpdate(formData)
+      // Mapeia campos snake_case para camelCase esperado pela API
+      const payload = {
+        title: formData.title,
+        description: formData.description,
+        columnId: formData.column_id,
+        position: formData.position,
+        responsaveis: formData.responsaveis || [],
+        prioridadeNum: formData.prioridade_num,
+        sprintNum: formData.sprint_num,
+        estimativa: formData.estimativa || [],
+        tipoTrabalho: formData.tipo_trabalho,
+      }
+      await onUpdate(payload)
       setIsEditing(false)
       toast({ title: 'Sucesso', description: 'Card atualizado' })
     } catch (error) {
