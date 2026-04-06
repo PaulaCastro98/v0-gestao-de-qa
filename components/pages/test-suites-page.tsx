@@ -11,8 +11,8 @@ import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { useToast } from '@/hooks/use-toast'
-import { 
-  Plus, Pencil, Trash2, FolderOpen, ChevronRight, ChevronDown, 
+import {
+  Plus, Pencil, Trash2, FolderOpen, ChevronRight, ChevronDown,
   Hand, ArrowUp, ArrowDown, Minus, MoreHorizontal, FileText
 } from 'lucide-react'
 import {
@@ -48,16 +48,15 @@ export default function TestSuitesPage() {
   const [allTestCases, setAllTestCases] = useState<TestCase[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedSuites, setExpandedSuites] = useState<Set<number>>(new Set())
-  
-  // Modals
+
   const [showSuiteModal, setShowSuiteModal] = useState(false)
   const [showAddCaseModal, setShowAddCaseModal] = useState(false)
   const [editingSuite, setEditingSuite] = useState<Suite | null>(null)
   const [targetSuiteId, setTargetSuiteId] = useState<number | null>(null)
-  
+
   const [suiteForm, setSuiteForm] = useState({ name: '', description: '', preCondition: '' })
   const [selectedCases, setSelectedCases] = useState<Set<number>>(new Set())
-  
+
   const { toast } = useToast()
 
   useEffect(() => {
@@ -71,17 +70,16 @@ export default function TestSuitesPage() {
         fetch('/api/test-suites'),
         fetch('/api/test-cases')
       ])
-      
+
       if (suitesRes.ok && casesRes.ok) {
         const suitesData = await suitesRes.json()
         const casesData = await casesRes.json()
-        
-        // Group test cases by suite
+
         const suitesWithCases = suitesData.map((suite: Suite) => ({
           ...suite,
           test_cases: casesData.filter((tc: TestCase) => tc.suite_id === suite.id)
         }))
-        
+
         setSuites(suitesWithCases)
         setAllTestCases(casesData)
       }
@@ -172,7 +170,6 @@ export default function TestSuitesPage() {
     if (!targetSuiteId || selectedCases.size === 0) return
 
     try {
-      // Update each selected test case to belong to this suite
       const promises = Array.from(selectedCases).map(caseId =>
         fetch(`/api/test-cases/${caseId}`, {
           method: 'PUT',
@@ -180,7 +177,7 @@ export default function TestSuitesPage() {
           body: JSON.stringify({ suite_id: targetSuiteId }),
         })
       )
-      
+
       await Promise.all(promises)
       setShowAddCaseModal(false)
       fetchData()
@@ -221,10 +218,7 @@ export default function TestSuitesPage() {
   const getTestCasePriority = (tc: TestCase) => tc.priority || tc.prioridade_teste || 'Média'
   const getTestCaseType = (tc: TestCase) => tc.type || tc.tipo_teste || 'Manual'
 
-  // Cases not assigned to any suite (available to add)
   const unassignedCases = allTestCases.filter(tc => !tc.suite_id)
-
-  // Total counts
   const totalCases = allTestCases.length
   const totalSuites = suites.length
 
@@ -308,9 +302,9 @@ export default function TestSuitesPage() {
                   <div></div>
                   <div></div>
                   <div className="flex items-center gap-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="h-8 w-8"
                       onClick={(e) => {
                         e.stopPropagation()
@@ -331,7 +325,7 @@ export default function TestSuitesPage() {
                           <Pencil className="w-4 h-4 mr-2" />
                           Editar Suite
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           onClick={() => handleDeleteSuite(suite.id)}
                           className="text-red-600"
                         >
@@ -347,15 +341,16 @@ export default function TestSuitesPage() {
                 <CollapsibleContent>
                   {suite.test_cases && suite.test_cases.length > 0 ? (
                     suite.test_cases.map((tc) => (
-                      <div 
+                      <div
                         key={tc.id}
                         className="grid grid-cols-[40px_40px_40px_1fr_120px_100px_60px] gap-2 px-4 py-2.5 border-b hover:bg-muted/30 transition-colors items-center pl-12"
                       >
                         <div>
                           <Checkbox />
                         </div>
-                        <div>
-                          <Hand className="w-4 h-4 text-muted-foreground" title={getTestCaseType(tc)} />
+                        {/* ✅ CORREÇÃO: removido title do ícone, colocado no div wrapper */}
+                        <div title={getTestCaseType(tc)}>
+                          <Hand className="w-4 h-4 text-muted-foreground" />
                         </div>
                         <div>{getPriorityIcon(getTestCasePriority(tc))}</div>
                         <div className="flex items-center gap-2">
@@ -368,10 +363,7 @@ export default function TestSuitesPage() {
                           </Badge>
                         </div>
                         <div>
-                          <Badge 
-                            variant="secondary" 
-                            className="text-xs"
-                          >
+                          <Badge variant="secondary" className="text-xs">
                             {tc.status || tc.status_teste || 'Pendente'}
                           </Badge>
                         </div>
@@ -383,7 +375,7 @@ export default function TestSuitesPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 onClick={() => removeCaseFromSuite(tc.id)}
                                 className="text-red-600"
                               >
@@ -398,7 +390,7 @@ export default function TestSuitesPage() {
                   ) : (
                     <div className="px-4 py-6 text-center text-muted-foreground text-sm border-b bg-muted/10">
                       Nenhum caso de teste nesta suite.{' '}
-                      <button 
+                      <button
                         className="text-primary hover:underline"
                         onClick={() => openAddCaseModal(suite.id)}
                       >
@@ -473,7 +465,7 @@ export default function TestSuitesPage() {
                 </p>
                 <div className="max-h-[400px] overflow-y-auto border rounded-lg divide-y">
                   {unassignedCases.map((tc) => (
-                    <label 
+                    <label
                       key={tc.id}
                       className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors"
                     >
@@ -506,8 +498,8 @@ export default function TestSuitesPage() {
                     </label>
                   ))}
                 </div>
-                <Button 
-                  onClick={handleAddCasesToSuite} 
+                <Button
+                  onClick={handleAddCasesToSuite}
                   className="w-full"
                   disabled={selectedCases.size === 0}
                 >
