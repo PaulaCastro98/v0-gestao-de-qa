@@ -69,27 +69,26 @@ export default function ProjetosPage() {
           <Button onClick={() => setShowCreateModal(true)}>Criar Primeiro Projeto</Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          <div className="space-y-2">
-            <h2 className="font-bold text-lg">Meus Projetos</h2>
-            <div className="space-y-1">
+        <div className="w-full space-y-4">
+          {/* Project selector at the top */}
+          <div className="flex items-center gap-4 bg-white p-4 rounded-lg border">
+            <label className="text-sm font-medium text-gray-600">Projeto:</label>
+            <select
+              value={selectedProject?.id || ''}
+              onChange={(e) => {
+                const project = projects.find((p) => p.id.toString() === e.target.value)
+                setSelectedProject(project || null)
+              }}
+              className="flex-1 max-w-xs px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
               {projects.map((project) => (
-                <div
-                  key={project.id}
-                  onClick={() => setSelectedProject(project)}
-                  className={`p-3 rounded cursor-pointer transition ${
-                    selectedProject?.id === project.id
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 hover:bg-gray-200'
-                  }`}
-                >
-                  <p className="text-sm font-medium">{project.name}</p>
-                </div>
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
               ))}
-            </div>
+            </select>
           </div>
 
-          <div className="lg:col-span-3 space-y-4">
             {selectedProject && (
               <>
                 <div className="flex justify-between items-start bg-white p-4 rounded-lg border">
@@ -141,7 +140,6 @@ export default function ProjetosPage() {
                 </Tabs>
               </>
             )}
-          </div>
         </div>
       )}
 

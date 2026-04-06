@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Menu,
   X,
@@ -15,6 +15,8 @@ import {
   BarChart3,
   LogOut,
   ChevronDown,
+  ChevronRight,
+  FolderKanban,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -27,14 +29,30 @@ const menuItems = [
   { label: 'Test Runs', href: '/test-runs', icon: Play },
   { label: 'Bugs', href: '/bugs', icon: Bug },
   { label: 'Métricas', href: '/metricas', icon: BarChart3 },
-  // Legacy pages - mantidas por compatibilidade
-  // { label: 'Histórias', href: '/historias', icon: ClipboardList },
-  // { label: 'Casos de Teste (Legado)', href: '/casos-teste', icon: ClipboardList },
 ]
 
 export default function SidebarNew({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(true)
+  const [projectsOpen, setProjectsOpen] = useState(true)
+  const [projects, setProjects] = useState<any[]>([])
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
   const pathname = usePathname()
+
+  useEffect(() => {
+    fetchProjects()
+  }, [])
+
+  const fetchProjects = async () => {
+    try {
+      const res = await fetch('/api/projects')
+      if (res.ok) {
+        const data = await res.json()
+        setProjects(data)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar projetos:', error)
+    }
+  }
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
@@ -77,6 +95,38 @@ export default function SidebarNew({ children }: { children: React.ReactNode }) 
               </Link>
             )
           })}
+
+          {/* Projects Section */}
+          {open && projects.length > 0 && (
+            <div className="pt-4 border-t border-slate-700 mt-4">
+              <button
+                onClick={() => setProjectsOpen(!projectsOpen)}
+                className="flex items-center gap-2 w-full px-4 py-2 text-gray-400 text-xs uppercase tracking-wider hover:text-gray-200 transition"
+              >
+                {projectsOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                Projetos
+              </button>
+              {projectsOpen && (
+                <div className="mt-1 space-y-1">
+                  {projects.map((project) => (
+                    <Link
+                      key={project.id}
+                      href={`/projetos?id=${project.id}`}
+                      onClick={() => setActiveProjectId(project.id)}
+                      className={`flex items-center gap-3 px-4 py-2 rounded text-sm transition ${
+                        activeProjectId === project.id
+                          ? 'bg-blue-600/50 text-white'
+                          : 'text-gray-400 hover:bg-slate-800 hover:text-gray-200'
+                      }`}
+                    >
+                      <FolderKanban size={16} />
+                      <span className="truncate">{project.name}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </nav>
 
         <div className="p-4 border-t border-slate-700">
