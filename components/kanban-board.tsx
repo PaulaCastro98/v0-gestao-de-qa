@@ -232,7 +232,7 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
           const colRes = await fetch('/api/kanban/columns', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: defaultColumns[i], position: i }),
+            body: JSON.stringify({ name: defaultColumns[i], position: i }),
           })
           if (colRes.ok) {
             const newCol = await colRes.json()
@@ -250,11 +250,12 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
 
       // Helper to find column by name (case-insensitive, partial match)
       const findColumnByName = (names: string[]): string | undefined => {
-        for (const name of names) {
-          const col = currentColumns.find(c => 
-            c.title.toLowerCase().includes(name.toLowerCase()) ||
-            name.toLowerCase().includes(c.title.toLowerCase())
-          )
+        for (const searchName of names) {
+          const col = currentColumns.find(c => {
+            const colName = (c.name || c.title || '').toLowerCase()
+            return colName.includes(searchName.toLowerCase()) ||
+              searchName.toLowerCase().includes(colName)
+          })
           if (col) return col.id
         }
         return undefined
