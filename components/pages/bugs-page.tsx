@@ -9,45 +9,66 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/hooks/use-toast'
-import { Plus, Pencil, Trash2, Bug } from 'lucide-react'
+import { Plus, Pencil, Trash2, Bug, GripVertical } from 'lucide-react'
 
 const SEVERITIES = ['Baixa', 'Média', 'Alta', 'Crítica']
 const PRIORITIES = ['Baixa', 'Média', 'Alta', 'Urgente']
 const STATUSES = ['Aberto', 'Em Análise', 'Em Correção', 'Resolvido', 'Fechado', 'Reaberto']
 
+const emptyForm = {
+  title: '',
+  feature_story: '',
+  suite_id: '',
+  severity: 'Média',
+  priority: 'Média',
+  status: 'Aberto',
+  sprint_release: '',
+  description: '',
+  steps: [''] as string[],
+  expected_result: '',
+  actual_result: '',
+  comments: '',
+  adjustment: '',
+}
+
 export default function BugsPage() {
   const [bugs, setBugs] = useState<any[]>([])
+  const [suites, setSuites] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingBug, setEditingBug] = useState<any>(null)
-  const [formData, setFormData] = useState({
-    title: '', description: '', severity: 'Média', priority: 'Média', status: 'Aberto', sprintRelease: ''
-  })
+  const [formData, setFormData] = useState({ ...emptyForm })
   const { toast } = useToast()
 
   useEffect(() => {
     fetchBugs()
+    fetchSuites()
   }, [])
 
   const fetchBugs = async () => {
     try {
       setLoading(true)
       const res = await fetch('/api/bugs')
-      if (res.ok) {
-        const data = await res.json()
-        setBugs(data)
-      }
-    } catch (error) {
+      if (res.ok) setBugs(await res.json())
+    } catch {
       toast({ title: 'Erro', description: 'Falha ao carregar bugs' })
     } finally {
       setLoading(false)
     }
   }
 
+  const fetchSuites = async () => {
+    try {
+      const res = await fetch('/api/test-suites')
+      if (res.ok) setSuites(await res.json())
+    } catch {}
+  }
+
   const openCreate = () => {
     setEditingBug(null)
-    setFormData({ title: '', description: '', severity: 'Média', priority: 'Média', status: 'Aberto', sprintRelease: '' })
+    setFormData({ ...emptyForm, steps: [''] })
     setShowModal(true)
   }
 
@@ -55,18 +76,48 @@ export default function BugsPage() {
     setEditingBug(bug)
     setFormData({
       title: bug.title || '',
-      description: bug.description || '',
+      feature_story: bug.feature_story || '',
+      suite_id: bug.suite_id?.toString() || '',
       severity: bug.severity || 'Média',
       priority: bug.priority || 'Média',
       status: bug.status || 'Aberto',
-      sprintRelease: bug.sprint_release || ''
+      sprint_release: bug.sprint_release || '',
+      description: bug.description || '',
+      steps: bug.steps?.length ? bug.steps : [''],
+      expected_result: bug.expected_result || '',
+      actual_result: bug.actual_result || '',
+      comments: bug.comments || '',
+      adjustment: bug.adjustment || '',
     })
     setShowModal(true)
   }
 
+  const setField = (key: string, value: string) =>
+    setFormData((prev) => ({ ...prev, [key]: value }))
+
+  const addStep = () =>
+    setFormData((prev) => ({ ...prev, steps: [...prev.steps, ''] }))
+
+  const updateStep = (index: number, value: string) =>
+    setFormData((prev) => {
+      const steps = [...prev.steps]
+      steps[index] = value
+      return { ...prev, steps }
+    })
+
+  const removeStep = (index: number) =>
+    setFormData((prev) => ({
+      ...prev,
+      steps: prev.steps.filter((_, i) => i !== index),
+    }))
+
   const handleSubmit = async () => {
     if (!formData.title.trim()) {
       toast({ title: 'Erro', description: 'Título é obrigatório' })
+      return
+    }
+    if (!formData.severity) {
+      toast({ title: 'Erro', description: 'Severidade é obrigatória' })
       return
     }
 
@@ -76,11 +127,18 @@ export default function BugsPage() {
       const body = {
         ...(editingBug && { id: editingBug.id }),
         title: formData.title,
-        description: formData.description,
+        feature_story: formData.feature_story || null,
+        suite_id: formData.suite_id ? parseInt(formData.suite_id) : null,
         severity: formData.severity,
         priority: formData.priority,
         status: formData.status,
-        sprint_release: formData.sprintRelease
+        sprint_release: formData.sprint_release || null,
+        description: formData.description || null,
+        steps: formData.steps.filter(s => s.trim()),
+        expected_result: formData.expected_result || null,
+        actual_result: formData.actual_result || null,
+        comments: formData.comments || null,
+        adjustment: formData.adjustment || null,
       }
 
       const res = await fetch(url, {
@@ -92,46 +150,43 @@ export default function BugsPage() {
       if (res.ok) {
         setShowModal(false)
         fetchBugs()
-        toast({ title: 'Sucesso', description: editingBug ? 'Bug atualizado' : 'Bug criado' })
+        toast({ title: 'Sucesso', description: editingBug ? 'Bug atualizado' : 'Bug registrado' })
       } else {
         const err = await res.json()
         toast({ title: 'Erro', description: err.error || 'Falha na operação' })
       }
-    } catch (error) {
+    } catch {
       toast({ title: 'Erro', description: 'Falha na operação' })
     }
   }
 
   const handleDelete = async (id: number) => {
     if (!confirm('Tem certeza que deseja excluir este bug?')) return
-
     try {
       const res = await fetch(`/api/bugs?id=${id}`, { method: 'DELETE' })
       if (res.ok) {
         fetchBugs()
         toast({ title: 'Sucesso', description: 'Bug excluído' })
       }
-    } catch (error) {
+    } catch {
       toast({ title: 'Erro', description: 'Falha ao excluir' })
     }
   }
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity?.toLowerCase()) {
-      case 'crítica': case 'critica': return 'bg-red-100 text-red-800'
-      case 'alta': return 'bg-orange-100 text-orange-800'
-      case 'média': case 'media': return 'bg-yellow-100 text-yellow-800'
-      default: return 'bg-green-100 text-green-800'
-    }
+  const getSeverityColor = (s: string) => {
+    const v = s?.toLowerCase()
+    if (v === 'crítica' || v === 'critica') return 'bg-red-100 text-red-800'
+    if (v === 'alta') return 'bg-orange-100 text-orange-800'
+    if (v === 'média' || v === 'media') return 'bg-yellow-100 text-yellow-800'
+    return 'bg-green-100 text-green-800'
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'resolvido': case 'fechado': return 'bg-green-100 text-green-800'
-      case 'em correção': case 'em correcao': return 'bg-blue-100 text-blue-800'
-      case 'reaberto': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
-    }
+  const getStatusColor = (s: string) => {
+    const v = s?.toLowerCase()
+    if (v === 'resolvido' || v === 'fechado') return 'bg-green-100 text-green-800'
+    if (v === 'em correção' || v === 'em correcao') return 'bg-blue-100 text-blue-800'
+    if (v === 'reaberto') return 'bg-red-100 text-red-800'
+    return 'bg-gray-100 text-gray-800'
   }
 
   return (
@@ -165,15 +220,13 @@ export default function BugsPage() {
                     <Bug className="w-5 h-5 text-red-600" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold">{bug.title || bug.tarefa_bug || 'Sem título'}</h3>
-                    <p className="text-sm text-gray-500 line-clamp-1">{bug.description || bug.descricao || 'Sem descrição'}</p>
+                    <h3 className="font-semibold">{bug.title || 'Sem título'}</h3>
+                    <p className="text-sm text-gray-500 line-clamp-1">
+                      {bug.feature_story ? `Feature: ${bug.feature_story}` : bug.description || 'Sem descrição'}
+                    </p>
                   </div>
-                  <Badge className={getSeverityColor(bug.severity)}>
-                    {bug.severity || 'Média'}
-                  </Badge>
-                  <Badge className={getStatusColor(bug.status)}>
-                    {bug.status || 'Aberto'}
-                  </Badge>
+                  <Badge className={getSeverityColor(bug.severity)}>{bug.severity || 'Média'}</Badge>
+                  <Badge className={getStatusColor(bug.status)}>{bug.status || 'Aberto'}</Badge>
                 </div>
                 <div className="flex gap-1 ml-4">
                   <Button variant="ghost" size="icon" onClick={() => openEdit(bug)}>
@@ -190,69 +243,191 @@ export default function BugsPage() {
       )}
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>{editingBug ? 'Editar Bug' : 'Novo Bug'}</DialogTitle>
+            <DialogTitle className="text-lg font-semibold">
+              {editingBug ? 'Editar Bug' : 'Registrar Novo Bug'}
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-            <div className="space-y-2">
-              <Label>Título *</Label>
+
+          <div className="overflow-y-auto flex-1 space-y-5 pr-1">
+
+            {/* Título */}
+            <div className="space-y-1.5">
+              <Label>Título <span className="text-red-500">*</span></Label>
               <Input
-                placeholder="Título do bug"
+                placeholder="Descreva o bug de forma objetiva"
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(e) => setField('title', e.target.value)}
               />
             </div>
-            <div className="space-y-2">
-              <Label>Descrição</Label>
-              <Textarea
-                placeholder="Descrição detalhada do bug"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={3}
+
+            {/* Feature / Historia */}
+            <div className="space-y-1.5">
+              <Label>Feature / História</Label>
+              <Input
+                placeholder="Ex: Login, Checkout, Dashboard..."
+                value={formData.feature_story}
+                onChange={(e) => setField('feature_story', e.target.value)}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Severidade</Label>
-                <Select value={formData.severity} onValueChange={(v) => setFormData({ ...formData, severity: v })}>
+
+            {/* Test Suite */}
+            <div className="space-y-1.5">
+              <Label>Test Suite</Label>
+              <Select value={formData.suite_id} onValueChange={(v) => setField('suite_id', v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma suite (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {suites.map((s) => (
+                    <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Separator />
+
+            {/* Severidade, Prioridade, Status */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label>Severidade <span className="text-red-500">*</span></Label>
+                <Select value={formData.severity} onValueChange={(v) => setField('severity', v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {SEVERITIES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label>Prioridade</Label>
-                <Select value={formData.priority} onValueChange={(v) => setFormData({ ...formData, priority: v })}>
+                <Select value={formData.priority} onValueChange={(v) => setField('priority', v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {PRIORITIES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label>Status</Label>
-                <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
+                <Select value={formData.status} onValueChange={(v) => setField('status', v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            {/* Sprint / Release */}
+            <div className="space-y-1.5">
+              <Label>Sprint / Release</Label>
+              <Input
+                placeholder="Ex: Sprint 10, v2.3.1"
+                value={formData.sprint_release}
+                onChange={(e) => setField('sprint_release', e.target.value)}
+              />
+            </div>
+
+            <Separator />
+
+            {/* Descrição */}
+            <div className="space-y-1.5">
+              <Label>Descrição</Label>
+              <Textarea
+                placeholder="Contexto geral do bug..."
+                value={formData.description}
+                onChange={(e) => setField('description', e.target.value)}
+                rows={2}
+              />
+            </div>
+
+            {/* Passos para reproduzir */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Passos para Reproduzir</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addStep}>
+                  <Plus className="w-3 h-3 mr-1" />
+                  Adicionar passo
+                </Button>
+              </div>
               <div className="space-y-2">
-                <Label>Sprint/Release</Label>
-                <Input
-                  placeholder="Ex: Sprint 10"
-                  value={formData.sprintRelease}
-                  onChange={(e) => setFormData({ ...formData, sprintRelease: e.target.value })}
+                {formData.steps.map((step, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-xs font-semibold text-gray-600 flex-shrink-0">
+                      {idx + 1}
+                    </div>
+                    <Input
+                      placeholder={`Passo ${idx + 1}`}
+                      value={step}
+                      onChange={(e) => updateStep(idx, e.target.value)}
+                      className="flex-1"
+                    />
+                    {formData.steps.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="flex-shrink-0 text-gray-400 hover:text-red-500"
+                        onClick={() => removeStep(idx)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Resultado Esperado / Obtido */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Resultado Esperado</Label>
+                <Textarea
+                  placeholder="O que deveria acontecer..."
+                  value={formData.expected_result}
+                  onChange={(e) => setField('expected_result', e.target.value)}
+                  rows={3}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Resultado Obtido</Label>
+                <Textarea
+                  placeholder="O que aconteceu de fato..."
+                  value={formData.actual_result}
+                  onChange={(e) => setField('actual_result', e.target.value)}
+                  rows={3}
                 />
               </div>
             </div>
+
+            {/* Ajuste sugerido */}
+            <div className="space-y-1.5">
+              <Label>Ajuste Sugerido</Label>
+              <Textarea
+                placeholder="Sugestão de correção ou comportamento esperado..."
+                value={formData.adjustment}
+                onChange={(e) => setField('adjustment', e.target.value)}
+                rows={2}
+              />
+            </div>
+
+            {/* Observações */}
+            <div className="space-y-1.5">
+              <Label>Observações / Comentários</Label>
+              <Textarea
+                placeholder="Informações adicionais, links, evidências..."
+                value={formData.comments}
+                onChange={(e) => setField('comments', e.target.value)}
+                rows={2}
+              />
+            </div>
+          </div>
+
+          <div className="pt-4 border-t mt-2">
             <Button onClick={handleSubmit} className="w-full">
-              {editingBug ? 'Salvar Alterações' : 'Criar Bug'}
+              {editingBug ? 'Salvar Alterações' : 'Registrar Bug'}
             </Button>
           </div>
         </DialogContent>
