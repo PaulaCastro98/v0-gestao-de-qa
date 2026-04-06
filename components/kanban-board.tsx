@@ -224,10 +224,34 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
 
       const { cards: githubCards } = await res.json()
 
+      // If no columns exist, create default ones first
+      let currentColumns = [...columns]
+      if (currentColumns.length === 0) {
+        const defaultColumns = ['Backlog', 'Em Progresso', 'Em Revisão', 'Concluído']
+        for (let i = 0; i < defaultColumns.length; i++) {
+          const colRes = await fetch('/api/kanban/columns', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: defaultColumns[i], position: i }),
+          })
+          if (colRes.ok) {
+            const newCol = await colRes.json()
+            currentColumns.push(newCol)
+          }
+        }
+        // Refresh columns state
+        await fetchColumns()
+        // Re-fetch to get updated columns with IDs
+        const colsRes = await fetch('/api/kanban/columns')
+        if (colsRes.ok) {
+          currentColumns = await colsRes.json()
+        }
+      }
+
       // Helper to find column by name (case-insensitive, partial match)
       const findColumnByName = (names: string[]): string | undefined => {
         for (const name of names) {
-          const col = columns.find(c => 
+          const col = currentColumns.find(c => 
             c.title.toLowerCase().includes(name.toLowerCase()) ||
             name.toLowerCase().includes(c.title.toLowerCase())
           )
@@ -241,19 +265,19 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
         const statusLower = status?.toLowerCase() || ''
         
         if (statusLower.includes('done') || statusLower.includes('conclu') || statusLower.includes('feito')) {
-          return findColumnByName(['Done', 'Concluído', 'Feito', 'Finalizado']) || columns[columns.length - 1]?.id
+          return findColumnByName(['Done', 'Concluído', 'Feito', 'Finalizado']) || currentColumns[currentColumns.length - 1]?.id
         }
         if (statusLower.includes('review') || statusLower.includes('revisão') || statusLower.includes('revisao')) {
-          return findColumnByName(['Review', 'Revisão', 'Em Revisão', 'In Review']) || columns[2]?.id
+          return findColumnByName(['Review', 'Revisão', 'Em Revisão', 'In Review']) || currentColumns[2]?.id
         }
         if (statusLower.includes('progress') || statusLower.includes('andamento') || statusLower.includes('fazendo')) {
-          return findColumnByName(['Progress', 'Em Progresso', 'In Progress', 'Fazendo', 'Andamento']) || columns[1]?.id
+          return findColumnByName(['Progress', 'Em Progresso', 'In Progress', 'Fazendo', 'Andamento']) || currentColumns[1]?.id
         }
         // Default: Todo, Backlog, or first column
-        return findColumnByName(['Todo', 'Backlog', 'A Fazer', 'Pendente']) || columns[0]?.id
+        return findColumnByName(['Todo', 'Backlog', 'A Fazer', 'Pendente']) || currentColumns[0]?.id
       }
 
-      console.log('[v0] Available columns:', columns.map(c => ({ id: c.id, title: c.title })))
+      console.log('[v0] Available columns:', currentColumns.map(c => ({ id: c.id, title: c.title })))
       console.log('[v0] GitHub cards to import:', githubCards.length)
 
       let importedCount = 0
@@ -322,7 +346,7 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
           <Plus className="h-4 w-4 mr-2" />
           Nova Coluna
         </Button>
-        <Button variant="outline" onClick={importFromGithub} disabled={importingGithub || columns.length === 0}>
+        <Button variant="outline" onClick={importFromGithub} disabled={importingGithub}>
           {importingGithub ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
           ) : (
