@@ -27,6 +27,9 @@ const menuItems = [
   { label: 'Test Runs', href: '/test-runs', icon: Play },
   { label: 'Bugs', href: '/bugs', icon: Bug },
   { label: 'Métricas', href: '/metricas', icon: BarChart3 },
+  // Legacy pages - mantidas por compatibilidade
+  // { label: 'Histórias', href: '/historias', icon: ClipboardList },
+  // { label: 'Casos de Teste (Legado)', href: '/casos-teste', icon: ClipboardList },
 ]
 
 export default function SidebarNew({ children }: { children: React.ReactNode }) {

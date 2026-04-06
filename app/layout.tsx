@@ -7,8 +7,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'QA Manager - Sistema de Gestão de Qualidade',
+  description: 'Sistema completo de gestão de casos de teste, bugs, planos de teste e métricas de QA',
   generator: 'v0.app',
   icons: {
     icon: [

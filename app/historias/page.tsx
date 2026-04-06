@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import Sidebar from '@/components/sidebar'
+import SidebarNew from '@/components/sidebar-new'
 import { HistoriasPage } from '@/components/historias-page'
 
 export const metadata: Metadata = {
@@ -9,8 +9,8 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <Sidebar>
+    <SidebarNew>
       <HistoriasPage />
-    </Sidebar>
+    </SidebarNew>
   )
 }

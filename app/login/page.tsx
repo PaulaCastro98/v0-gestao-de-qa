@@ -38,8 +38,8 @@ export default function LoginPage() {
         return
       }
 
-      // Redireciona para a página de casos de teste após o login bem-sucedido
-      router.push('/casos-teste')
+      // Redireciona para a página de projetos após o login bem-sucedido
+      router.push('/projetos')
     } catch (err) {
       setError('Erro ao fazer login')
       console.error('[v0] Login exception:', err)
