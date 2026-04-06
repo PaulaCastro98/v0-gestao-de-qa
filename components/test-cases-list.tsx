@@ -23,40 +23,52 @@ import { Trash2, Edit2, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 
+interface TestCase {
+  id: string
+  title: string
+  status: string
+  priority: string
+  type: string
+  suite_id?: number
+  created_at?: string
+}
+
 interface TestCasesListProps {
   refreshTrigger?: number
+  onEdit?: (testCase: TestCase) => void
 }
 
-const statusColors = {
-  Rascunho: 'bg-gray-100 text-gray-800',
-  'Em Andamento': 'bg-blue-100 text-blue-800',
-  Aprovado: 'bg-green-100 text-green-800',
-  Reprovado: 'bg-red-100 text-red-800',
+// ✅ Status e cores atualizados para os valores do banco
+const statusColors: Record<string, string> = {
+  'Pendente': 'bg-gray-100 text-gray-800',
+  'Em andamento': 'bg-blue-100 text-blue-800',
+  'Aprovado': 'bg-green-100 text-green-800',
+  'Reprovado': 'bg-red-100 text-red-800',
+  'Bloqueado': 'bg-orange-100 text-orange-800',
 }
 
-const priorityColors = {
-  Baixa: 'bg-blue-50 text-blue-700',
-  Média: 'bg-yellow-50 text-yellow-700',
-  Alta: 'bg-orange-50 text-orange-700',
-  Crítica: 'bg-red-50 text-red-700',
+// ✅ Prioridades atualizadas para os valores do banco
+const priorityColors: Record<string, string> = {
+  'Baixa': 'bg-blue-50 text-blue-700',
+  'Média': 'bg-yellow-50 text-yellow-700',
+  'Alta': 'bg-orange-50 text-orange-700',
+  'Crítica': 'bg-red-50 text-red-700',
 }
 
-export function TestCasesList({ refreshTrigger }: TestCasesListProps) {
-  const [testCases, setTestCases] = useState([])
+export function TestCasesList({ refreshTrigger, onEdit }: TestCasesListProps) {
+  const [testCases, setTestCases] = useState<TestCase[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [sprint, setSprint] = useState('')
   const [status, setStatus] = useState('')
   const [periodo, setPeriodo] = useState('')
 
   useEffect(() => {
     fetchTestCases()
-  }, [refreshTrigger, sprint, status, periodo])
+  }, [refreshTrigger, status, periodo])
 
   const fetchTestCases = async () => {
     setIsLoading(true)
     try {
       const params = new URLSearchParams()
-      if (sprint) params.append('sprint', sprint)
       if (status) params.append('status', status)
       if (periodo) params.append('periodo', periodo)
 
@@ -64,6 +76,8 @@ export function TestCasesList({ refreshTrigger }: TestCasesListProps) {
       if (response.ok) {
         const data = await response.json()
         setTestCases(data)
+      } else {
+        toast.error('Erro ao carregar casos de teste')
       }
     } catch (error) {
       toast.error('Erro ao carregar casos de teste')
@@ -94,38 +108,36 @@ export function TestCasesList({ refreshTrigger }: TestCasesListProps) {
   return (
     <Card className="w-full">
       <div className="p-6 space-y-4">
-        <div className="flex gap-4 flex-wrap">
-          <div className="w-40">
-            <Select value={sprint || 'all'} onValueChange={(value) => setSprint(value === 'all' ? '' : value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filtrar por Sprint" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as Sprints</SelectItem>
-                <SelectItem value="Sprint 1">Sprint 1</SelectItem>
-                <SelectItem value="Sprint 2">Sprint 2</SelectItem>
-                <SelectItem value="Sprint 3">Sprint 3</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
 
-          <div className="w-40">
-            <Select value={status || 'all'} onValueChange={(value) => setStatus(value === 'all' ? '' : value)}>
+        {/* ✅ Filtros */}
+        <div className="flex gap-4 flex-wrap">
+
+          {/* Filtro Status */}
+          <div className="w-44">
+            <Select
+              value={status || 'all'}
+              onValueChange={(value) => setStatus(value === 'all' ? '' : value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Filtrar por Status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os Status</SelectItem>
-                <SelectItem value="Rascunho">Rascunho</SelectItem>
-                <SelectItem value="Em Andamento">Em Andamento</SelectItem>
+                <SelectItem value="Pendente">Pendente</SelectItem>
+                <SelectItem value="Em andamento">Em andamento</SelectItem>
                 <SelectItem value="Aprovado">Aprovado</SelectItem>
                 <SelectItem value="Reprovado">Reprovado</SelectItem>
+                <SelectItem value="Bloqueado">Bloqueado</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div className="w-40">
-            <Select value={periodo || 'all'} onValueChange={(value) => setPeriodo(value === 'all' ? '' : value)}>
+          {/* Filtro Período */}
+          <div className="w-44">
+            <Select
+              value={periodo || 'all'}
+              onValueChange={(value) => setPeriodo(value === 'all' ? '' : value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Período" />
               </SelectTrigger>
@@ -139,8 +151,9 @@ export function TestCasesList({ refreshTrigger }: TestCasesListProps) {
           </div>
         </div>
 
+        {/* ✅ Tabela */}
         {isLoading ? (
-          <div className="text-center py-8">Carregando...</div>
+          <div className="text-center py-8 text-gray-500">Carregando...</div>
         ) : testCases.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             Nenhum caso de teste encontrado
@@ -151,43 +164,51 @@ export function TestCasesList({ refreshTrigger }: TestCasesListProps) {
               <TableHeader>
                 <TableRow>
                   <TableHead>Título</TableHead>
-                  <TableHead>Módulo</TableHead>
-                  <TableHead>Sprint</TableHead>
+                  <TableHead>Tipo</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Prioridade</TableHead>
-                  <TableHead>Analista</TableHead>
+                  <TableHead>Criado em</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {testCases.map((testCase: any) => (
+                {testCases.map((testCase) => (
                   <TableRow key={testCase.id}>
-                    <TableCell className="font-medium">{testCase.titulo}</TableCell>
-                    <TableCell>{testCase.modulo}</TableCell>
-                    <TableCell>{testCase.sprint}</TableCell>
+
+                    {/* ✅ Corrigido: title (não titulo) */}
+                    <TableCell className="font-medium">
+                      {testCase.title}
+                    </TableCell>
+
+                    {/* ✅ Corrigido: type (não tipo_teste) */}
+                    <TableCell>{testCase.type || '-'}</TableCell>
+
+                    {/* ✅ Status com badge colorido */}
                     <TableCell>
-                      <Badge
-                        className={statusColors[testCase.status as keyof typeof statusColors]}
-                      >
-                        {testCase.status}
+                      <Badge className={statusColors[testCase.status] ?? 'bg-gray-100 text-gray-800'}>
+                        {testCase.status ?? '-'}
                       </Badge>
                     </TableCell>
+
+                    {/* ✅ Priority com badge colorido */}
                     <TableCell>
-                      <Badge
-                        className={priorityColors[testCase.prioridade as keyof typeof priorityColors]}
-                      >
-                        {testCase.prioridade}
+                      <Badge className={priorityColors[testCase.priority] ?? 'bg-gray-100 text-gray-800'}>
+                        {testCase.priority ?? '-'}
                       </Badge>
                     </TableCell>
-                    <TableCell>{testCase.analista || '-'}</TableCell>
+
+                    {/* ✅ Data formatada */}
+                    <TableCell>
+                      {testCase.created_at
+                        ? new Date(testCase.created_at).toLocaleDateString('pt-BR')
+                        : '-'}
+                    </TableCell>
+
+                    {/* ✅ Ações */}
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Link href={`/casos-teste/${testCase.id}`}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            title="Visualizar"
-                          >
+                        <Link href={`/test-cases/${testCase.id}`}>
+                          <Button variant="ghost" size="sm" title="Visualizar">
                             <Eye className="h-4 w-4" />
                           </Button>
                         </Link>
@@ -195,9 +216,7 @@ export function TestCasesList({ refreshTrigger }: TestCasesListProps) {
                           variant="ghost"
                           size="sm"
                           title="Editar"
-                          onClick={() => {
-                            // TODO: Implement edit
-                          }}
+                          onClick={() => onEdit?.(testCase)}
                         >
                           <Edit2 className="h-4 w-4" />
                         </Button>
@@ -207,10 +226,11 @@ export function TestCasesList({ refreshTrigger }: TestCasesListProps) {
                           title="Deletar"
                           onClick={() => deleteTestCase(testCase.id)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
                       </div>
                     </TableCell>
+
                   </TableRow>
                 ))}
               </TableBody>
