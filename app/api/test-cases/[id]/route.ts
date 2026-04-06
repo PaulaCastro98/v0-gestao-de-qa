@@ -36,44 +36,45 @@ export async function PUT(
     const { id } = await params
     const data = await request.json()
 
+    // Check if this is a simple suite_id update
+    if ('suite_id' in data && Object.keys(data).length === 1) {
+      const resultado = await sql`
+        UPDATE test_cases
+        SET suite_id = ${data.suite_id}, updated_at = NOW()
+        WHERE id = ${id}
+        RETURNING *
+      `
+      if (!resultado.length) {
+        return NextResponse.json({ error: 'Caso de teste não encontrado' }, { status: 404 })
+      }
+      return NextResponse.json(resultado[0])
+    }
+
+    // Full update with all fields
     const {
-      titulo_tc,
-      descricao_objetivo,
-      sprint,
-      prioridade_teste,
-      passos,
-      resultado_esperado,
-      tipo_teste,
-      ambiente_teste,
-      status_teste,
-      qa_responsavel,
-      observacoes_adicionais,
-      historia_git,
-      link_hu_git,
-      pre_condicoes,
-      requisitos,
-      desenvolvedor_responsavel,
+      title, description, priority, status, type, pre_condition, post_condition,
+      suite_id, severity, automation_status, behavior, layer, milestone, tags,
+      // Legacy fields for backwards compatibility
+      titulo_tc, descricao_objetivo, prioridade_teste, status_teste, tipo_teste, pre_condicoes
     } = data
 
     const resultado = await sql`
       UPDATE test_cases
       SET
-        titulo_tc = ${titulo_tc},
-        descricao_objetivo = ${descricao_objetivo},
-        sprint = ${sprint},
-        prioridade_teste = ${prioridade_teste},
-        passos = ${passos},
-        resultado_esperado = ${resultado_esperado},
-        tipo_teste = ${tipo_teste},
-        ambiente_teste = ${ambiente_teste},
-        status_teste = ${status_teste},
-        qa_responsavel = ${qa_responsavel},
-        observacoes_adicionais = ${observacoes_adicionais},
-        historia_git = ${historia_git},
-        link_hu_git = ${link_hu_git},
-        pre_condicoes = ${pre_condicoes},
-        requisitos = ${requisitos},
-        desenvolvedor_responsavel = ${desenvolvedor_responsavel},
+        title = COALESCE(${title}, ${titulo_tc}, title),
+        description = COALESCE(${description}, ${descricao_objetivo}, description),
+        priority = COALESCE(${priority}, ${prioridade_teste}, priority),
+        status = COALESCE(${status}, ${status_teste}, status),
+        type = COALESCE(${type}, ${tipo_teste}, type),
+        pre_condition = COALESCE(${pre_condition}, ${pre_condicoes}, pre_condition),
+        post_condition = COALESCE(${post_condition}, post_condition),
+        suite_id = COALESCE(${suite_id}, suite_id),
+        severity = COALESCE(${severity}, severity),
+        automation_status = COALESCE(${automation_status}, automation_status),
+        behavior = COALESCE(${behavior}, behavior),
+        layer = COALESCE(${layer}, layer),
+        milestone = COALESCE(${milestone}, milestone),
+        tags = COALESCE(${tags}, tags),
         updated_at = NOW()
       WHERE id = ${id}
       RETURNING *
