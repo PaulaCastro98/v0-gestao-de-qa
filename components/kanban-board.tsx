@@ -17,6 +17,7 @@ const CARD_PRIORITIES = ['Baixa', 'Media', 'Alta']
 export function KanbanBoard({ projectId }: { projectId: string }) {
   const [columns, setColumns] = useState<any[]>([])
   const [cards, setCards] = useState<{ [key: string]: any[] }>({})
+  const [members, setMembers] = useState<any[]>([])
   const [search, setSearch] = useState('')
   const [draggedCard, setDraggedCard] = useState<any>(null)
   const [showNewColumn, setShowNewColumn] = useState(false)
@@ -27,14 +28,13 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
     title: '',
     description: '',
     type: 'Tarefa',
-    situacaoColumnId: '', // ID da coluna selecionada
+    situacaoColumnId: '',
     tipoTrabalho: '',
     prioridadeNum: '',
     sprintNum: '',
     responsaveis: [] as string[],
     estimativa: [] as string[],
   })
-  const [newResponsavel, setNewResponsavel] = useState('')
   const [newEstimativa, setNewEstimativa] = useState('')
   const [selectedCard, setSelectedCard] = useState<any>(null)
   const [showCardDetail, setShowCardDetail] = useState(false)
@@ -42,6 +42,7 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
 
   useEffect(() => {
     fetchColumns()
+    fetchMembers()
   }, [projectId])
 
   const fetchColumns = async () => {
@@ -62,6 +63,18 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
       setCards((prev) => ({ ...prev, [columnId]: cardsData }))
     } catch (error) {
       console.error('Erro ao buscar cards:', error)
+    }
+  }
+
+  const fetchMembers = async () => {
+    try {
+      const res = await fetch(`/api/project-members?projectId=${projectId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setMembers(data)
+      }
+    } catch (error) {
+      console.error('Erro ao buscar membros:', error)
     }
   }
 
@@ -101,7 +114,6 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
   const openAddCard = (columnId: string) => {
     setActiveColumnId(columnId)
     setNewCard({ title: '', description: '', type: 'Tarefa', situacaoColumnId: columnId, tipoTrabalho: '', prioridadeNum: '', sprintNum: '', responsaveis: [], estimativa: [] })
-    setNewResponsavel('')
     setNewEstimativa('')
     setShowAddCard(true)
   }
@@ -397,40 +409,39 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
             <div className="space-y-2">
               <Label>Responsáveis</Label>
               <div className="flex gap-1 flex-wrap">
-                {newCard.responsaveis.map((resp, idx) => (
-                  <span key={idx} className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                    {resp}
-                    <button onClick={() => setNewCard((prev) => ({ ...prev, responsaveis: prev.responsaveis.filter((_, i) => i !== idx) }))}>
-                      <span className="text-blue-600 hover:text-red-600">×</span>
-                    </button>
-                  </span>
-                ))}
+                {newCard.responsaveis.map((resp, idx) => {
+                  const member = members.find(m => m.nome === resp)
+                  return (
+                    <span key={idx} className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                      {resp}
+                      <button onClick={() => setNewCard((prev) => ({ ...prev, responsaveis: prev.responsaveis.filter((_, i) => i !== idx) }))}>
+                        <span className="text-blue-600 hover:text-red-600">×</span>
+                      </button>
+                    </span>
+                  )
+                })}
               </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Nome do membro..."
-                  value={newResponsavel}
-                  onChange={(e) => setNewResponsavel(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && newResponsavel.trim()) {
-                      setNewCard((prev) => ({ ...prev, responsaveis: [...prev.responsaveis, newResponsavel.trim()] }))
-                      setNewResponsavel('')
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    if (newResponsavel.trim()) {
-                      setNewCard((prev) => ({ ...prev, responsaveis: [...prev.responsaveis, newResponsavel.trim()] }))
-                      setNewResponsavel('')
-                    }
-                  }}
-                >
-                  Adicionar
-                </Button>
+              <div className="space-y-1 border rounded p-2 bg-gray-50 max-h-40 overflow-y-auto">
+                {members.map((member) => (
+                  <label key={member.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-1 rounded">
+                    <input
+                      type="checkbox"
+                      checked={newCard.responsaveis.includes(member.nome)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setNewCard((prev) => ({ ...prev, responsaveis: [...prev.responsaveis, member.nome] }))
+                        } else {
+                          setNewCard((prev) => ({ ...prev, responsaveis: prev.responsaveis.filter(r => r !== member.nome) }))
+                        }
+                      }}
+                    />
+                    <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                      {member.avatar_initials}
+                    </div>
+                    <span className="text-sm">{member.nome}</span>
+                    <span className="text-xs text-gray-600 ml-auto">{member.role}</span>
+                  </label>
+                ))}
               </div>
             </div>
 
