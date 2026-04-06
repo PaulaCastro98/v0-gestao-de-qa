@@ -5,7 +5,8 @@ import { ClipboardList, BarChart3, Users, Shield } from 'lucide-react'
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    // ✅ CORREÇÃO: bg-gradient-to-br → bg-linear-to-br
+    <main className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100">
       {/* Header Navigation */}
       <header className="border-b bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -100,7 +101,8 @@ export default function Home() {
         </div>
 
         {/* CTA Section */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-12 text-center text-white space-y-4">
+        {/* ✅ CORREÇÃO: bg-gradient-to-r → bg-linear-to-r */}
+        <div className="bg-linear-to-r from-blue-600 to-blue-700 rounded-lg p-12 text-center text-white space-y-4">
           <h3 className="text-3xl font-bold">Pronto para começar?</h3>
           <p className="text-lg text-blue-100">
             Faça login para acessar o sistema de gestão QA
