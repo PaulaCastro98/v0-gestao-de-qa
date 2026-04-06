@@ -143,7 +143,8 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
       })
       if (res.ok) {
         setShowAddCard(false)
-        fetchCards(activeColumnId)
+        // ✅ CORREÇÃO 1: verifica se activeColumnId não é null antes de chamar
+        if (activeColumnId) fetchCards(activeColumnId)
         toast({ title: 'Sucesso', description: 'Card criado' })
       } else {
         const err = await res.json()
@@ -224,13 +225,11 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
 
       const { cards: githubCards, columns: githubColumnNames } = await res.json()
 
-      // Build a map: GitHub status name -> kanban column id
       const statusToColumnId: Record<string, string> = {}
 
       for (let i = 0; i < githubColumnNames.length; i++) {
         const ghColName: string = githubColumnNames[i]
 
-        // Check if a column with this exact name already exists
         const existing = columns.find(
           (c: any) => (c.name || c.title || '').toLowerCase() === ghColName.toLowerCase()
         )
@@ -238,7 +237,6 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
         if (existing) {
           statusToColumnId[ghColName] = existing.id
         } else {
-          // Create the column exactly as it is in GitHub
           const colRes = await fetch('/api/kanban/columns', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -251,15 +249,12 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
         }
       }
 
-      // Refresh columns in UI
       await fetchColumns()
 
-      // Re-fetch columns to get final state
       let currentColumns = columns
-      const colsRes = await fetch('/api/kanban/columns')
+      const colsRes = await fetch(`/api/kanban/columns?projectId=${projectId}`)
       if (colsRes.ok) currentColumns = await colsRes.json()
 
-      // Fallback: find column id by status name (case-insensitive)
       const getColumnId = (status: string): string | undefined => {
         if (statusToColumnId[status]) return statusToColumnId[status]
         const match = currentColumns.find(
@@ -298,7 +293,7 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
       await fetchColumns()
       toast({ title: 'Sucesso', description: `${importedCount} cards importados do GitHub` })
     } catch (error) {
-      console.error('[v0] Error importing from GitHub:', error)
+      console.error('[kanban] Error importing from GitHub:', error)
       toast({ title: 'Erro', description: 'Falha ao importar do GitHub' })
     } finally {
       setImportingGithub(false)
@@ -368,7 +363,8 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
                   className="bg-white p-3 rounded shadow cursor-pointer hover:shadow-lg hover:bg-blue-50 transition"
                 >
                   <div className="flex gap-2">
-                    <GripVertical className="h-4 w-4 text-gray-400 flex-shrink-0 mt-1" />
+                    {/* ✅ CORREÇÃO 2: flex-shrink-0 → shrink-0 */}
+                    <GripVertical className="h-4 w-4 text-gray-400 shrink-0 mt-1" />
                     <div className="flex-1">
                       <p className="font-sm text-sm font-semibold">{card.title}</p>
                       {card.type && (
@@ -428,7 +424,6 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
           </DialogHeader>
           <div className="space-y-4">
 
-            {/* Título */}
             <div className="space-y-1">
               <Label>Título *</Label>
               <Input
@@ -438,7 +433,6 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
               />
             </div>
 
-            {/* Descrição */}
             <div className="space-y-1">
               <Label>Descrição</Label>
               <Textarea
@@ -449,7 +443,6 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
               />
             </div>
 
-            {/* Tipo + Prioridade */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label>Tipo</Label>
@@ -475,7 +468,6 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
               </div>
             </div>
 
-            {/* Tipo de Trabalho + Prioridade Numérica + Sprint */}
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1">
                 <Label>Tipo de Trabalho</Label>
@@ -507,21 +499,17 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
               </div>
             </div>
 
-            {/* Responsáveis */}
             <div className="space-y-2">
               <Label>Responsáveis</Label>
               <div className="flex gap-1 flex-wrap">
-                {newCard.responsaveis.map((resp, idx) => {
-                  const member = members.find(m => m.nome === resp)
-                  return (
-                    <span key={idx} className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                      {resp}
-                      <button onClick={() => setNewCard((prev) => ({ ...prev, responsaveis: prev.responsaveis.filter((_, i) => i !== idx) }))}>
-                        <span className="text-blue-600 hover:text-red-600">×</span>
-                      </button>
-                    </span>
-                  )
-                })}
+                {newCard.responsaveis.map((resp, idx) => (
+                  <span key={idx} className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                    {resp}
+                    <button onClick={() => setNewCard((prev) => ({ ...prev, responsaveis: prev.responsaveis.filter((_, i) => i !== idx) }))}>
+                      <span className="text-blue-600 hover:text-red-600">×</span>
+                    </button>
+                  </span>
+                ))}
               </div>
               <div className="space-y-1 border rounded p-2 bg-gray-50 max-h-40 overflow-y-auto">
                 {members.map((member) => (
@@ -537,7 +525,8 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
                         }
                       }}
                     />
-                    <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                    {/* ✅ CORREÇÃO 3: flex-shrink-0 → shrink-0 */}
+                    <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold shrink-0">
                       {member.avatar_initials}
                     </div>
                     <span className="text-sm">{member.nome}</span>
@@ -547,7 +536,6 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
               </div>
             </div>
 
-            {/* Estimativa */}
             <div className="space-y-2">
               <Label>Estimativa</Label>
               <div className="flex gap-1 flex-wrap">
@@ -606,7 +594,6 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
             cardId: selectedCard.id,
             ...updatedCard
           })
-          // Refresh both old and new columns if changed
           if (updatedCard.columnId !== oldColumnId) {
             fetchCards(oldColumnId)
             fetchCards(updatedCard.columnId)
