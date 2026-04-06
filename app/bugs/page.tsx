@@ -1,16 +1,15 @@
 import { Metadata } from 'next'
-import Sidebar from '@/components/sidebar'
-import { BugsPage } from '@/components/bugs-page'
+import SidebarNew from '@/components/sidebar-new'
+import BugsPage from '@/components/pages/bugs-page'
 
 export const metadata: Metadata = {
   title: 'Bugs - QA Manager',
-  description: 'Gerenciamento de bugs com evidências',
 }
 
 export default function Page() {
   return (
-    <Sidebar>
+    <SidebarNew>
       <BugsPage />
-    </Sidebar>
+    </SidebarNew>
   )
 }
