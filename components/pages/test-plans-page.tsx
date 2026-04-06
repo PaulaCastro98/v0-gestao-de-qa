@@ -36,8 +36,9 @@ const PRIORITY_COLOR: Record<string, string> = {
 const STATUS_COLOR: Record<string, string> = {
   'Aprovado': 'bg-green-100 text-green-700',
   'Reprovado': 'bg-red-100 text-red-700',
-  'Em Andamento': 'bg-blue-100 text-blue-700',
+  'Em andamento': 'bg-blue-100 text-blue-700',
   'Bloqueado': 'bg-gray-200 text-gray-600',
+  'Pendente': 'bg-yellow-100 text-yellow-700',
 }
 
 // ─── Plan Detail View ─────────────────────────────────────────────────────────
@@ -80,7 +81,6 @@ function PlanDetail({
       const linkedIds = new Set(cases.map(c => c.id))
       const available = all.filter(c => !linkedIds.has(c.id))
       setAvailableCases(available)
-      // auto-expand all suites
       const suites = new Set(available.map(c => c.suite_name ?? 'Sem Suite'))
       setExpandedSuites(suites)
     }
@@ -159,7 +159,6 @@ function PlanDetail({
     }
   }
 
-  // Group linked cases by suite
   const groupedCases = useMemo(() => {
     const map = new Map<string, PlanCase[]>()
     for (const c of cases) {
@@ -221,16 +220,23 @@ function PlanDetail({
         <div className="border rounded-lg overflow-hidden divide-y divide-gray-100">
           {Array.from(groupedCases.entries()).map(([suiteName, suiteCases]) => (
             <div key={suiteName}>
-              {/* Suite header row */}
+              {/* ✅ Suite header row - comentário corrigido */}
               <div className="flex items-center gap-2 bg-gray-50 px-4 py-2">
-                // ✅ Depois
-                <button onClick={() => toggleSuiteAll(suiteName, suiteCases)} className="shrink-0" />
-                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{suiteName}</span>
+                <button
+                  onClick={() => toggleSuiteAll(suiteName, suiteCases)}
+                  className="shrink-0"
+                />
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  {suiteName}
+                </span>
                 <span className="text-xs text-gray-400">({suiteCases.length})</span>
               </div>
               {/* Cases in suite */}
               {suiteCases.map((c) => (
-                <div key={c.plan_case_id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition group">
+                <div
+                  key={c.plan_case_id}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition group"
+                >
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium text-gray-800 truncate">{c.title}</span>
                   </div>
@@ -240,7 +246,9 @@ function PlanDetail({
                   <Badge className={`text-xs ${STATUS_COLOR[c.status] ?? 'bg-gray-100 text-gray-600'}`}>
                     {c.status || 'Pendente'}
                   </Badge>
-                  <span className="text-xs text-gray-400 w-20 text-right">{c.automation_status || 'Manual'}</span>
+                  <span className="text-xs text-gray-400 w-20 text-right">
+                    {c.automation_status || 'Manual'}
+                  </span>
                   <button
                     onClick={() => handleRemoveCase(c.plan_case_id)}
                     className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition ml-2"
@@ -267,7 +275,7 @@ function PlanDetail({
             </div>
           </div>
 
-          {/* Search + filter row */}
+          {/* Search */}
           <div className="flex items-center gap-2 px-5 py-3 border-b">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -301,7 +309,9 @@ function PlanDetail({
           <div className="flex-1 overflow-y-auto">
             {filteredAvailable.length === 0 ? (
               <p className="text-sm text-gray-400 text-center py-10">
-                {availableCases.length === 0 ? 'Todos os casos já estão no plano' : 'Nenhum resultado encontrado'}
+                {availableCases.length === 0
+                  ? 'Todos os casos já estão no plano'
+                  : 'Nenhum resultado encontrado'}
               </p>
             ) : (
               Array.from(groupedAvailable.entries()).map(([suiteName, suiteCases]) => {
@@ -309,10 +319,12 @@ function PlanDetail({
                 const allChecked = suiteCases.every(c => selectedIds.has(c.id))
                 return (
                   <div key={suiteName}>
-                    {/* Suite row */}
+                    {/* ✅ Suite row - comentário corrigido */}
                     <div className="flex items-center gap-2 px-5 py-2 bg-gray-50 border-b border-gray-100 sticky top-0">
-                     // ✅ Depois
-                      <button onClick={() => toggleSuiteAll(suiteName, suiteCases)} className="shrink-0">
+                      <button
+                        onClick={() => toggleSuiteAll(suiteName, suiteCases)}
+                        className="shrink-0"
+                      >
                         {allChecked
                           ? <CheckSquare className="w-4 h-4 text-blue-500" />
                           : <Square className="w-4 h-4 text-gray-300" />
@@ -331,7 +343,7 @@ function PlanDetail({
                         <span className="text-xs text-gray-400">({suiteCases.length})</span>
                       </button>
                     </div>
-                    {/* Cases */}
+                    {/* ✅ Cases - checkbox corrigido */}
                     {isExpanded && suiteCases.map((c) => (
                       <label
                         key={c.id}
@@ -343,9 +355,10 @@ function PlanDetail({
                           checked={selectedIds.has(c.id)}
                           onChange={() => toggleCase(c.id)}
                         />
-                       // ✅ Depois
-                        ? <CheckSquare className="w-4 h-4 text-blue-500 shrink-0" />
-                        : <Square className="w-4 h-4 text-gray-300 shrink-0" />
+                        {selectedIds.has(c.id)
+                          ? <CheckSquare className="w-4 h-4 text-blue-500 shrink-0" />
+                          : <Square className="w-4 h-4 text-gray-300 shrink-0" />
+                        }
                         <span className="flex-1 text-sm text-gray-700">{c.title}</span>
                         <Badge className={`text-xs ${PRIORITY_COLOR[c.priority] ?? 'bg-gray-100 text-gray-600'}`}>
                           {c.priority || 'Média'}
@@ -415,11 +428,10 @@ export default function TestPlansPage() {
       return
     }
     try {
-      const url = '/api/test-plans'
       const method = editingPlan ? 'PUT' : 'POST'
       const body = editingPlan ? { id: editingPlan.id, ...formData } : formData
 
-      const res = await fetch(url, {
+      const res = await fetch('/api/test-plans', {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -429,7 +441,6 @@ export default function TestPlansPage() {
         const updated = await res.json()
         setShowModal(false)
         fetchPlans()
-        // if editing the currently open plan, update it
         if (editingPlan && activePlan?.id === editingPlan.id) {
           setActivePlan(updated)
         }
@@ -457,14 +468,13 @@ export default function TestPlansPage() {
     }
   }
 
-  // Show plan detail view
   if (activePlan) {
     return (
       <>
         <PlanDetail
           plan={activePlan}
           onBack={() => setActivePlan(null)}
-          onEdit={(p) => { openEdit(p); }}
+          onEdit={(p) => { openEdit(p) }}
         />
         <Dialog open={showModal} onOpenChange={setShowModal}>
           <DialogContent>
@@ -495,7 +505,6 @@ export default function TestPlansPage() {
     )
   }
 
-  // Plans list view
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
@@ -527,17 +536,22 @@ export default function TestPlansPage() {
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  // ✅ Depois
+                  {/* ✅ Ícone do plano */}
                   <div className="p-2 bg-green-100 rounded shrink-0">
                     <ClipboardList className="w-5 h-5 text-green-600" />
                   </div>
                   <div className="min-w-0">
                     <h3 className="font-semibold truncate">{plan.title}</h3>
-                    <p className="text-sm text-gray-500 line-clamp-2">{plan.description || 'Sem descrição'}</p>
+                    <p className="text-sm text-gray-500 line-clamp-2">
+                      {plan.description || 'Sem descrição'}
+                    </p>
                   </div>
                 </div>
-                // ✅ Depois
-                <div className="flex gap-1 shrink-0 ml-2" onClick={(e) => e.stopPropagation()}>
+                {/* ✅ Botões de ação */}
+                <div
+                  className="flex gap-1 shrink-0 ml-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Button variant="ghost" size="icon" onClick={() => openEdit(plan)}>
                     <Pencil className="w-4 h-4" />
                   </Button>
