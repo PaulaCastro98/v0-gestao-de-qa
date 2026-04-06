@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 
 export async function GET() {
   const token = process.env.GITHUB_TOKEN
+  const owner = process.env.GITHUB_OWNER || 'viadupladigital'
+  const projectNumber = parseInt(process.env.GITHUB_PROJECT_NUMBER || '1', 10)
 
   if (!token) {
     return NextResponse.json({ error: 'GITHUB_TOKEN não configurado' }, { status: 500 })
@@ -9,8 +11,8 @@ export async function GET() {
 
   const query = `
     query {
-      organization(login: "viadupladigital") {
-        projectV2(number: 1) {
+      organization(login: "${owner}") {
+        projectV2(number: ${projectNumber}) {
           title
           items(first: 100) {
             nodes {
