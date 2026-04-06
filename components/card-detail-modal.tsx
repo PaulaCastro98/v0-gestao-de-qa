@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,6 +16,14 @@ export function CardDetailModal({ card, open, onOpenChange, onUpdate, onDelete }
   const [newResponsavel, setNewResponsavel] = useState('')
   const [newEstimativa, setNewEstimativa] = useState('')
   const { toast } = useToast()
+
+  // Sincroniza formData quando card mudar
+  useEffect(() => {
+    if (card) {
+      setFormData(card)
+      setIsEditing(false)
+    }
+  }, [card])
 
   if (!card) return null
 

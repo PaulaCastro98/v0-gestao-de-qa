@@ -3,6 +3,12 @@ import { neon } from '@neondatabase/serverless'
 
 const sql = neon(process.env.DATABASE_URL!)
 
+// Converte array JS para formato PostgreSQL array literal
+function toPgArray(arr: string[] | null | undefined): string | null {
+  if (!arr || arr.length === 0) return null
+  return `{${arr.map(s => `"${s.replace(/"/g, '\\"')}"`).join(',')}}`
+}
+
 export async function GET(request: NextRequest) {
   try {
     const columnId = request.nextUrl.searchParams.get('columnId')
@@ -29,8 +35,8 @@ export async function POST(request: NextRequest) {
       )
       VALUES (
         ${columnId}, ${title}, ${description}, ${type}, ${priority}, ${position},
-        ${JSON.stringify(responsaveis || [])}, ${prioridadeNum || null}, ${sprintNum || null}, 
-        ${JSON.stringify(estimativa || [])}, ${tipoTrabalho || null},
+        ${toPgArray(responsaveis)}, ${prioridadeNum || null}, ${sprintNum || null}, 
+        ${toPgArray(estimativa)}, ${tipoTrabalho || null},
         NOW(), NOW()
       )
       RETURNING *
@@ -52,10 +58,10 @@ export async function PUT(request: NextRequest) {
         description = ${description},
         column_id = ${columnId}, 
         position = ${position},
-        responsaveis = ${JSON.stringify(responsaveis || [])},
+        responsaveis = ${toPgArray(responsaveis)},
         prioridade_num = ${prioridadeNum || null},
         sprint_num = ${sprintNum || null},
-        estimativa = ${JSON.stringify(estimativa || [])},
+        estimativa = ${toPgArray(estimativa)},
         tipo_trabalho = ${tipoTrabalho || null},
         updated_at = NOW()
       WHERE id = ${cardId}
