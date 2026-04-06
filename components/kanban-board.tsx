@@ -23,7 +23,19 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
   const [newColumnName, setNewColumnName] = useState('')
   const [showAddCard, setShowAddCard] = useState(false)
   const [activeColumnId, setActiveColumnId] = useState<string | null>(null)
-  const [newCard, setNewCard] = useState({ title: '', description: '', type: 'Tarefa', priority: 'Media' })
+  const [newCard, setNewCard] = useState({
+    title: '',
+    description: '',
+    type: 'Tarefa',
+    priority: 'Media',
+    tipoTrabalho: '',
+    prioridadeNum: '',
+    sprintNum: '',
+    responsaveis: [] as string[],
+    estimativa: [] as string[],
+  })
+  const [newResponsavel, setNewResponsavel] = useState('')
+  const [newEstimativa, setNewEstimativa] = useState('')
   const [selectedCard, setSelectedCard] = useState<any>(null)
   const [showCardDetail, setShowCardDetail] = useState(false)
   const { toast } = useToast()
@@ -88,7 +100,9 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
 
   const openAddCard = (columnId: string) => {
     setActiveColumnId(columnId)
-    setNewCard({ title: '', description: '', type: 'Tarefa', priority: 'Media' })
+    setNewCard({ title: '', description: '', type: 'Tarefa', priority: 'Media', tipoTrabalho: '', prioridadeNum: '', sprintNum: '', responsaveis: [], estimativa: [] })
+    setNewResponsavel('')
+    setNewEstimativa('')
     setShowAddCard(true)
   }
 
@@ -105,6 +119,11 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
           type: newCard.type,
           priority: newCard.priority,
           position: cards[activeColumnId]?.length || 0,
+          tipoTrabalho: newCard.tipoTrabalho || null,
+          prioridadeNum: newCard.prioridadeNum ? parseInt(newCard.prioridadeNum) : null,
+          sprintNum: newCard.sprintNum ? parseInt(newCard.sprintNum) : null,
+          responsaveis: newCard.responsaveis,
+          estimativa: newCard.estimativa,
         }),
       })
       if (res.ok) {
@@ -279,19 +298,23 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
       </Dialog>
 
       <Dialog open={showAddCard} onOpenChange={setShowAddCard}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Novo Card</DialogTitle>
+            <DialogTitle>Nova Tarefa</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+
+            {/* Título */}
             <div className="space-y-1">
               <Label>Título *</Label>
               <Input
-                placeholder="Título do card"
+                placeholder="Título da tarefa"
                 value={newCard.title}
                 onChange={(e) => setNewCard((prev) => ({ ...prev, title: e.target.value }))}
               />
             </div>
+
+            {/* Descrição */}
             <div className="space-y-1">
               <Label>Descrição</Label>
               <Textarea
@@ -301,13 +324,13 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
                 rows={3}
               />
             </div>
+
+            {/* Tipo + Prioridade */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label>Tipo</Label>
                 <Select value={newCard.type} onValueChange={(v) => setNewCard((prev) => ({ ...prev, type: v }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {CARD_TYPES.map((t) => (
                       <SelectItem key={t} value={t}>{t}</SelectItem>
@@ -316,11 +339,9 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label>Prioridade</Label>
+                <Label>Situação (Coluna)</Label>
                 <Select value={newCard.priority} onValueChange={(v) => setNewCard((prev) => ({ ...prev, priority: v }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {CARD_PRIORITIES.map((p) => (
                       <SelectItem key={p} value={p}>{p}</SelectItem>
@@ -329,8 +350,123 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
                 </Select>
               </div>
             </div>
+
+            {/* Tipo de Trabalho + Prioridade Numérica + Sprint */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label>Tipo de Trabalho</Label>
+                <Input
+                  placeholder="Ex: Feature, Hotfix..."
+                  value={newCard.tipoTrabalho}
+                  onChange={(e) => setNewCard((prev) => ({ ...prev, tipoTrabalho: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Prioridade (1-10)</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="10"
+                  placeholder="1"
+                  value={newCard.prioridadeNum}
+                  onChange={(e) => setNewCard((prev) => ({ ...prev, prioridadeNum: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Sprint #</Label>
+                <Input
+                  type="number"
+                  placeholder="1"
+                  value={newCard.sprintNum}
+                  onChange={(e) => setNewCard((prev) => ({ ...prev, sprintNum: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            {/* Responsáveis */}
+            <div className="space-y-2">
+              <Label>Responsáveis</Label>
+              <div className="flex gap-1 flex-wrap">
+                {newCard.responsaveis.map((resp, idx) => (
+                  <span key={idx} className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                    {resp}
+                    <button onClick={() => setNewCard((prev) => ({ ...prev, responsaveis: prev.responsaveis.filter((_, i) => i !== idx) }))}>
+                      <span className="text-blue-600 hover:text-red-600">×</span>
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Nome do membro..."
+                  value={newResponsavel}
+                  onChange={(e) => setNewResponsavel(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newResponsavel.trim()) {
+                      setNewCard((prev) => ({ ...prev, responsaveis: [...prev.responsaveis, newResponsavel.trim()] }))
+                      setNewResponsavel('')
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    if (newResponsavel.trim()) {
+                      setNewCard((prev) => ({ ...prev, responsaveis: [...prev.responsaveis, newResponsavel.trim()] }))
+                      setNewResponsavel('')
+                    }
+                  }}
+                >
+                  Adicionar
+                </Button>
+              </div>
+            </div>
+
+            {/* Estimativa */}
+            <div className="space-y-2">
+              <Label>Estimativa</Label>
+              <div className="flex gap-1 flex-wrap">
+                {newCard.estimativa.map((est, idx) => (
+                  <span key={idx} className="inline-flex items-center gap-1 bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded border">
+                    {est}
+                    <button onClick={() => setNewCard((prev) => ({ ...prev, estimativa: prev.estimativa.filter((_, i) => i !== idx) }))}>
+                      <span className="text-gray-600 hover:text-red-600">×</span>
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Ex: 5 pontos, 2 horas..."
+                  value={newEstimativa}
+                  onChange={(e) => setNewEstimativa(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newEstimativa.trim()) {
+                      setNewCard((prev) => ({ ...prev, estimativa: [...prev.estimativa, newEstimativa.trim()] }))
+                      setNewEstimativa('')
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    if (newEstimativa.trim()) {
+                      setNewCard((prev) => ({ ...prev, estimativa: [...prev.estimativa, newEstimativa.trim()] }))
+                      setNewEstimativa('')
+                    }
+                  }}
+                >
+                  Adicionar
+                </Button>
+              </div>
+            </div>
+
             <Button onClick={addCard} className="w-full" disabled={!newCard.title.trim()}>
-              Criar Card
+              Criar Tarefa
             </Button>
           </div>
         </DialogContent>
