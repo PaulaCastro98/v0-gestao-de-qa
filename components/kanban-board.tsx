@@ -10,8 +10,8 @@ import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { GripVertical, Plus, Trash2 } from 'lucide-react'
 
-const CARD_TYPES = ['Sprint', 'Épico', 'História', 'Feature', 'Bug', 'Tarefa']
-const CARD_PRIORITIES = ['Baixa', 'Média', 'Alta', 'Crítica']
+const CARD_TYPES = ['Sprint', 'Epico', 'Historia', 'Feature', 'Bug', 'Tarefa']
+const CARD_PRIORITIES = ['Baixa', 'Media', 'Alta']
 
 export function KanbanBoard({ projectId }: { projectId: string }) {
   const [columns, setColumns] = useState<any[]>([])
@@ -22,7 +22,7 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
   const [newColumnName, setNewColumnName] = useState('')
   const [showAddCard, setShowAddCard] = useState(false)
   const [activeColumnId, setActiveColumnId] = useState<string | null>(null)
-  const [newCard, setNewCard] = useState({ title: '', description: '', type: 'Tarefa', priority: 'Média' })
+  const [newCard, setNewCard] = useState({ title: '', description: '', type: 'Tarefa', priority: 'Media' })
   const { toast } = useToast()
 
   useEffect(() => {
@@ -85,7 +85,7 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
 
   const openAddCard = (columnId: string) => {
     setActiveColumnId(columnId)
-    setNewCard({ title: '', description: '', type: 'Tarefa', priority: 'Média' })
+    setNewCard({ title: '', description: '', type: 'Tarefa', priority: 'Media' })
     setShowAddCard(true)
   }
 
