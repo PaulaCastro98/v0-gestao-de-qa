@@ -27,7 +27,7 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
     title: '',
     description: '',
     type: 'Tarefa',
-    priority: 'Media',
+    situacaoColumnId: '', // ID da coluna selecionada
     tipoTrabalho: '',
     prioridadeNum: '',
     sprintNum: '',
@@ -100,25 +100,27 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
 
   const openAddCard = (columnId: string) => {
     setActiveColumnId(columnId)
-    setNewCard({ title: '', description: '', type: 'Tarefa', priority: 'Media', tipoTrabalho: '', prioridadeNum: '', sprintNum: '', responsaveis: [], estimativa: [] })
+    setNewCard({ title: '', description: '', type: 'Tarefa', situacaoColumnId: columnId, tipoTrabalho: '', prioridadeNum: '', sprintNum: '', responsaveis: [], estimativa: [] })
     setNewResponsavel('')
     setNewEstimativa('')
     setShowAddCard(true)
   }
 
   const addCard = async () => {
-    if (!newCard.title.trim() || !activeColumnId) return
+    if (!newCard.title.trim()) return
+    const targetColumnId = newCard.situacaoColumnId || activeColumnId
+    if (!targetColumnId) return
     try {
       const res = await fetch('/api/kanban/cards', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          columnId: activeColumnId,
+          columnId: targetColumnId,
           title: newCard.title,
           description: newCard.description,
           type: newCard.type,
-          priority: newCard.priority,
-          position: cards[activeColumnId]?.length || 0,
+          priority: null,
+          position: cards[targetColumnId]?.length || 0,
           tipoTrabalho: newCard.tipoTrabalho || null,
           prioridadeNum: newCard.prioridadeNum ? parseInt(newCard.prioridadeNum) : null,
           sprintNum: newCard.sprintNum ? parseInt(newCard.sprintNum) : null,
@@ -171,18 +173,26 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
 
   const handleDrop = async (columnId: string) => {
     if (!draggedCard) return
+    const fromColumnId = draggedCard.column_id
     try {
       await fetch('/api/kanban/cards', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           cardId: draggedCard.id,
+          title: draggedCard.title,
+          description: draggedCard.description,
           columnId,
           position: (cards[columnId]?.length || 0),
+          responsaveis: draggedCard.responsaveis || [],
+          prioridadeNum: draggedCard.prioridade_num,
+          sprintNum: draggedCard.sprint_num,
+          estimativa: draggedCard.estimativa || [],
+          tipoTrabalho: draggedCard.tipo_trabalho,
         }),
       })
       setDraggedCard(null)
-      fetchCards(draggedCard.column_id)
+      fetchCards(fromColumnId)
       fetchCards(columnId)
     } catch (error) {
       toast({ title: 'Erro', description: 'Falha ao mover card' })
@@ -340,11 +350,11 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
               </div>
               <div className="space-y-1">
                 <Label>Situação (Coluna)</Label>
-                <Select value={newCard.priority} onValueChange={(v) => setNewCard((prev) => ({ ...prev, priority: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select value={newCard.situacaoColumnId} onValueChange={(v) => setNewCard((prev) => ({ ...prev, situacaoColumnId: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Selecione a coluna" /></SelectTrigger>
                   <SelectContent>
-                    {CARD_PRIORITIES.map((p) => (
-                      <SelectItem key={p} value={p}>{p}</SelectItem>
+                    {columns.map((col) => (
+                      <SelectItem key={col.id} value={col.id.toString()}>{col.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -474,13 +484,22 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
 
       <CardDetailModal
         card={selectedCard}
+        columns={columns}
         open={showCardDetail}
         onOpenChange={setShowCardDetail}
         onUpdate={async (updatedCard: any) => {
+          const oldColumnId = selectedCard.column_id
           await updateCard({
             cardId: selectedCard.id,
             ...updatedCard
           })
+          // Refresh both old and new columns if changed
+          if (updatedCard.columnId !== oldColumnId) {
+            fetchCards(oldColumnId)
+            fetchCards(updatedCard.columnId)
+          } else {
+            fetchCards(oldColumnId)
+          }
           setShowCardDetail(false)
         }}
         onDelete={async (cardId: string) => {

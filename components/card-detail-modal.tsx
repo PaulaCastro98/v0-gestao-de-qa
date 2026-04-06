@@ -7,10 +7,11 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import { X, Trash2 } from 'lucide-react'
 
-export function CardDetailModal({ card, open, onOpenChange, onUpdate, onDelete }: any) {
+export function CardDetailModal({ card, columns, open, onOpenChange, onUpdate, onDelete }: any) {
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState(card || {})
   const [newResponsavel, setNewResponsavel] = useState('')
@@ -168,10 +169,26 @@ export function CardDetailModal({ card, open, onOpenChange, onUpdate, onDelete }
               )}
             </div>
 
-            {/* Situação */}
+            {/* Situação (Coluna) */}
             <div className="space-y-1">
-              <Label>Situação</Label>
-              <p className="text-sm font-medium">{formData.tipo || '-'}</p>
+              <Label>Situação (Coluna)</Label>
+              {isEditing ? (
+                <Select 
+                  value={formData.column_id?.toString() || ''} 
+                  onValueChange={(v) => setFormData((prev: any) => ({ ...prev, column_id: parseInt(v) }))}
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione a coluna" /></SelectTrigger>
+                  <SelectContent>
+                    {columns?.map((col: any) => (
+                      <SelectItem key={col.id} value={col.id.toString()}>{col.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <p className="text-sm font-medium">
+                  {columns?.find((col: any) => col.id === formData.column_id)?.name || '-'}
+                </p>
+              )}
             </div>
           </div>
 
