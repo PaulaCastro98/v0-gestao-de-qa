@@ -20,10 +20,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { projectId, name, color, position } = await request.json()
+    const { projectId, name, position } = await request.json()
     const column = await sql`
-      INSERT INTO kanban_columns (project_id, name, color, position, created_at)
-      VALUES (${projectId}, ${name}, ${color}, ${position}, NOW())
+      INSERT INTO kanban_columns (project_id, name, position, created_at)
+      VALUES (${projectId}, ${name}, ${position}, NOW())
       RETURNING *
     `
     return NextResponse.json(column[0], { status: 201 })
@@ -35,10 +35,10 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const { columnId, name, color, position } = await request.json()
+    const { columnId, name, position } = await request.json()
     const column = await sql`
       UPDATE kanban_columns 
-      SET name = ${name}, color = ${color}, position = ${position}
+      SET name = ${name}, position = ${position}
       WHERE id = ${columnId}
       RETURNING *
     `
