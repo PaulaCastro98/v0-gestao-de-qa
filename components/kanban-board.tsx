@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label'
 import { CardDetailModal } from '@/components/card-detail-modal'
 import { useToast } from '@/hooks/use-toast'
-import { GripVertical, Plus, Trash2 } from 'lucide-react'
+import { GripVertical, Plus, Trash2, Github, Loader2 } from 'lucide-react'
 
 const CARD_TYPES = ['Sprint', 'Epico', 'Historia', 'Feature', 'Bug', 'Tarefa']
 const CARD_PRIORITIES = ['Baixa', 'Media', 'Alta']
@@ -38,6 +38,7 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
   const [newEstimativa, setNewEstimativa] = useState('')
   const [selectedCard, setSelectedCard] = useState<any>(null)
   const [showCardDetail, setShowCardDetail] = useState(false)
+  const [importingGithub, setImportingGithub] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -211,6 +212,65 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
     }
   }
 
+  const importFromGithub = async () => {
+    setImportingGithub(true)
+    try {
+      const res = await fetch('/api/github/project')
+      if (!res.ok) {
+        const err = await res.json()
+        toast({ title: 'Erro', description: err.error || 'Falha ao buscar projeto do GitHub' })
+        return
+      }
+
+      const { cards: githubCards } = await res.json()
+
+      // Map GitHub status to column ID
+      const statusMap: { [key: string]: string | undefined } = {
+        'Todo': columns[0]?.id,
+        'Backlog': columns[0]?.id,
+        'In Progress': columns[1]?.id,
+        'Em Progresso': columns[1]?.id,
+        'In Review': columns[2]?.id,
+        'Em Revisão': columns[2]?.id,
+        'Done': columns[columns.length - 1]?.id,
+        'Concluído': columns[columns.length - 1]?.id,
+      }
+
+      let importedCount = 0
+      for (const card of githubCards) {
+        const columnId = statusMap[card.status] || columns[0]?.id
+        if (!columnId) continue
+
+        await fetch('/api/kanban/cards', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            columnId,
+            title: card.title,
+            description: card.description,
+            type: card.type,
+            priority: null,
+            position: 0,
+            responsaveis: card.responsaveis,
+            estimativa: [],
+            tipoTrabalho: null,
+            prioridadeNum: null,
+            sprintNum: null,
+          }),
+        })
+        importedCount++
+      }
+
+      await fetchColumns()
+      toast({ title: 'Sucesso', description: `${importedCount} cards importados do GitHub` })
+    } catch (error) {
+      console.error('[v0] Error importing from GitHub:', error)
+      toast({ title: 'Erro', description: 'Falha ao importar do GitHub' })
+    } finally {
+      setImportingGithub(false)
+    }
+  }
+
   const filteredColumns = columns.map((col) => ({
     ...col,
     cards: (cards[col.id] || []).filter(
@@ -232,6 +292,14 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
         <Button onClick={() => setShowNewColumn(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Nova Coluna
+        </Button>
+        <Button variant="outline" onClick={importFromGithub} disabled={importingGithub || columns.length === 0}>
+          {importingGithub ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Github className="h-4 w-4 mr-2" />
+          )}
+          Importar do GitHub
         </Button>
       </div>
 
