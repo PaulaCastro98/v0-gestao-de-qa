@@ -63,7 +63,7 @@ export default function BugsPage() {
     try {
       const res = await fetch('/api/test-suites')
       if (res.ok) setSuites(await res.json())
-    } catch {}
+    } catch { }
   }
 
   const openCreate = () => {
@@ -355,7 +355,8 @@ export default function BugsPage() {
               <div className="space-y-2">
                 {formData.steps.map((step, idx) => (
                   <div key={idx} className="flex items-center gap-2">
-                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-xs font-semibold text-gray-600 flex-shrink-0">
+                   // ✅ Depois
+                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-xs font-semibold text-gray-600 shrink-0">
                       {idx + 1}
                     </div>
                     <Input
@@ -369,7 +370,8 @@ export default function BugsPage() {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="flex-shrink-0 text-gray-400 hover:text-red-500"
+                        // ✅ Depois
+                        className="shrink-0 text-gray-400 hover:text-red-500"
                         onClick={() => removeStep(idx)}
                       >
                         <Trash2 className="w-4 h-4" />
