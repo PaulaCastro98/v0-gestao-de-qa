@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
+import { CardDetailModal } from '@/components/card-detail-modal'
 import { useToast } from '@/hooks/use-toast'
 import { GripVertical, Plus, Trash2 } from 'lucide-react'
 
@@ -23,6 +24,8 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
   const [showAddCard, setShowAddCard] = useState(false)
   const [activeColumnId, setActiveColumnId] = useState<string | null>(null)
   const [newCard, setNewCard] = useState({ title: '', description: '', type: 'Tarefa', priority: 'Media' })
+  const [selectedCard, setSelectedCard] = useState<any>(null)
+  const [showCardDetail, setShowCardDetail] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -117,6 +120,32 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
     }
   }
 
+  const updateCard = async (updatedCard: any) => {
+    try {
+      const res = await fetch('/api/kanban/cards', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedCard),
+      })
+      if (res.ok) {
+        if (selectedCard?.column_id) fetchCards(selectedCard.column_id)
+        toast({ title: 'Sucesso', description: 'Card atualizado' })
+      }
+    } catch (error) {
+      toast({ title: 'Erro', description: 'Falha ao atualizar card' })
+    }
+  }
+
+  const deleteCard = async (cardId: string) => {
+    try {
+      await fetch(`/api/kanban/cards?cardId=${cardId}`, { method: 'DELETE' })
+      if (selectedCard?.column_id) fetchCards(selectedCard.column_id)
+      toast({ title: 'Sucesso', description: 'Card deletado' })
+    } catch (error) {
+      toast({ title: 'Erro', description: 'Falha ao deletar card' })
+    }
+  }
+
   const handleDragStart = (card: any) => {
     setDraggedCard(card)
   }
@@ -187,9 +216,13 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
               {column.cards.map((card: any) => (
                 <div
                   key={card.id}
+                  onClick={() => {
+                    setSelectedCard(card)
+                    setShowCardDetail(true)
+                  }}
                   draggable
                   onDragStart={() => handleDragStart(card)}
-                  className="bg-white p-3 rounded shadow cursor-move hover:shadow-lg transition"
+                  className="bg-white p-3 rounded shadow cursor-pointer hover:shadow-lg hover:bg-blue-50 transition"
                 >
                   <div className="flex gap-2">
                     <GripVertical className="h-4 w-4 text-gray-400 flex-shrink-0 mt-1" />
@@ -199,6 +232,18 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
                         <span className="inline-block text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded mt-1">
                           {card.type}
                         </span>
+                      )}
+                      {card.responsaveis?.length > 0 && (
+                        <div className="flex gap-1 flex-wrap mt-2">
+                          {card.responsaveis.slice(0, 2).map((resp: string, i: number) => (
+                            <span key={i} className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">
+                              {resp}
+                            </span>
+                          ))}
+                          {card.responsaveis.length > 2 && (
+                            <span className="text-xs text-gray-600">+{card.responsaveis.length - 2}</span>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -290,6 +335,23 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
           </div>
         </DialogContent>
       </Dialog>
+
+      <CardDetailModal
+        card={selectedCard}
+        open={showCardDetail}
+        onOpenChange={setShowCardDetail}
+        onUpdate={async (updatedCard: any) => {
+          await updateCard({
+            cardId: selectedCard.id,
+            ...updatedCard
+          })
+          setShowCardDetail(false)
+        }}
+        onDelete={async (cardId: string) => {
+          await deleteCard(cardId)
+          setShowCardDetail(false)
+        }}
+      />
     </div>
   )
 }

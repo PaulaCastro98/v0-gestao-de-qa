@@ -20,10 +20,19 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { columnId, title, description, type, priority, position } = await request.json()
+    const { columnId, title, description, type, priority, position, responsaveis, prioridadeNum, sprintNum, estimativa, tipoTrabalho } = await request.json()
     const card = await sql`
-      INSERT INTO kanban_cards (column_id, title, description, type, priority, position, created_at, updated_at)
-      VALUES (${columnId}, ${title}, ${description}, ${type}, ${priority}, ${position}, NOW(), NOW())
+      INSERT INTO kanban_cards (
+        column_id, title, description, type, priority, position, 
+        responsaveis, prioridade_num, sprint_num, estimativa, tipo_trabalho,
+        created_at, updated_at
+      )
+      VALUES (
+        ${columnId}, ${title}, ${description}, ${type}, ${priority}, ${position},
+        ${JSON.stringify(responsaveis || [])}, ${prioridadeNum || null}, ${sprintNum || null}, 
+        ${JSON.stringify(estimativa || [])}, ${tipoTrabalho || null},
+        NOW(), NOW()
+      )
       RETURNING *
     `
     return NextResponse.json(card[0], { status: 201 })
@@ -35,10 +44,20 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const { cardId, columnId, position } = await request.json()
+    const { cardId, title, description, columnId, position, responsaveis, prioridadeNum, sprintNum, estimativa, tipoTrabalho } = await request.json()
     const card = await sql`
       UPDATE kanban_cards 
-      SET column_id = ${columnId}, position = ${position}, updated_at = NOW()
+      SET 
+        title = ${title},
+        description = ${description},
+        column_id = ${columnId}, 
+        position = ${position},
+        responsaveis = ${JSON.stringify(responsaveis || [])},
+        prioridade_num = ${prioridadeNum || null},
+        sprint_num = ${sprintNum || null},
+        estimativa = ${JSON.stringify(estimativa || [])},
+        tipo_trabalho = ${tipoTrabalho || null},
+        updated_at = NOW()
       WHERE id = ${cardId}
       RETURNING *
     `
