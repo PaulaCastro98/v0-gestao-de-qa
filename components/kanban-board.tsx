@@ -222,73 +222,56 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
         return
       }
 
-      const { cards: githubCards } = await res.json()
+      const { cards: githubCards, columns: githubColumnNames } = await res.json()
 
-      // If no columns exist, create default ones first
-      let currentColumns = [...columns]
-      if (currentColumns.length === 0) {
-        const defaultColumns = ['Backlog', 'Em Progresso', 'Em Revisão', 'Concluído']
-        for (let i = 0; i < defaultColumns.length; i++) {
+      // Build a map: GitHub status name -> kanban column id
+      const statusToColumnId: Record<string, string> = {}
+
+      for (let i = 0; i < githubColumnNames.length; i++) {
+        const ghColName: string = githubColumnNames[i]
+
+        // Check if a column with this exact name already exists
+        const existing = columns.find(
+          (c: any) => (c.name || c.title || '').toLowerCase() === ghColName.toLowerCase()
+        )
+
+        if (existing) {
+          statusToColumnId[ghColName] = existing.id
+        } else {
+          // Create the column exactly as it is in GitHub
           const colRes = await fetch('/api/kanban/columns', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: defaultColumns[i], position: i }),
+            body: JSON.stringify({ name: ghColName, position: columns.length + i }),
           })
           if (colRes.ok) {
             const newCol = await colRes.json()
-            currentColumns.push(newCol)
+            statusToColumnId[ghColName] = newCol.id
           }
         }
-        // Refresh columns state
-        await fetchColumns()
-        // Re-fetch to get updated columns with IDs
-        const colsRes = await fetch('/api/kanban/columns')
-        if (colsRes.ok) {
-          currentColumns = await colsRes.json()
-        }
       }
 
-      // Helper to find column by name (case-insensitive, partial match)
-      const findColumnByName = (names: string[]): string | undefined => {
-        for (const searchName of names) {
-          const col = currentColumns.find(c => {
-            const colName = (c.name || c.title || '').toLowerCase()
-            return colName.includes(searchName.toLowerCase()) ||
-              searchName.toLowerCase().includes(colName)
-          })
-          if (col) return col.id
-        }
-        return undefined
-      }
+      // Refresh columns in UI
+      await fetchColumns()
 
-      // Map GitHub status to column ID by searching column names
-      const getColumnIdForStatus = (status: string): string | undefined => {
-        const statusLower = status?.toLowerCase() || ''
-        
-        if (statusLower.includes('done') || statusLower.includes('conclu') || statusLower.includes('feito')) {
-          return findColumnByName(['Done', 'Concluído', 'Feito', 'Finalizado']) || currentColumns[currentColumns.length - 1]?.id
-        }
-        if (statusLower.includes('review') || statusLower.includes('revisão') || statusLower.includes('revisao')) {
-          return findColumnByName(['Review', 'Revisão', 'Em Revisão', 'In Review']) || currentColumns[2]?.id
-        }
-        if (statusLower.includes('progress') || statusLower.includes('andamento') || statusLower.includes('fazendo')) {
-          return findColumnByName(['Progress', 'Em Progresso', 'In Progress', 'Fazendo', 'Andamento']) || currentColumns[1]?.id
-        }
-        // Default: Todo, Backlog, or first column
-        return findColumnByName(['Todo', 'Backlog', 'A Fazer', 'Pendente']) || currentColumns[0]?.id
-      }
+      // Re-fetch columns to get final state
+      let currentColumns = columns
+      const colsRes = await fetch('/api/kanban/columns')
+      if (colsRes.ok) currentColumns = await colsRes.json()
 
-      console.log('[v0] Available columns:', currentColumns.map(c => ({ id: c.id, title: c.title })))
-      console.log('[v0] GitHub cards to import:', githubCards.length)
+      // Fallback: find column id by status name (case-insensitive)
+      const getColumnId = (status: string): string | undefined => {
+        if (statusToColumnId[status]) return statusToColumnId[status]
+        const match = currentColumns.find(
+          (c: any) => (c.name || c.title || '').toLowerCase() === status.toLowerCase()
+        )
+        return match?.id || currentColumns[0]?.id
+      }
 
       let importedCount = 0
       for (const card of githubCards) {
-        const columnId = getColumnIdForStatus(card.status)
-        console.log('[v0] Card status:', card.status, '-> columnId:', columnId)
-        if (!columnId) {
-          console.log('[v0] Skipping card - no columnId found')
-          continue
-        }
+        const columnId = getColumnId(card.status)
+        if (!columnId) continue
 
         const response = await fetch('/api/kanban/cards', {
           method: 'POST',
@@ -307,10 +290,7 @@ export function KanbanBoard({ projectId }: { projectId: string }) {
             sprintNum: null,
           }),
         })
-        if (!response.ok) {
-          const err = await response.json()
-          console.log('[v0] Error creating card:', err)
-        } else {
+        if (response.ok) {
           importedCount++
         }
       }

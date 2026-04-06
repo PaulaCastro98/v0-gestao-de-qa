@@ -14,6 +14,18 @@ export async function GET() {
       organization(login: "${owner}") {
         projectV2(number: ${projectNumber}) {
           title
+          fields(first: 20) {
+            nodes {
+              ... on ProjectV2SingleSelectField {
+                id
+                name
+                options {
+                  id
+                  name
+                }
+              }
+            }
+          }
           items(first: 100) {
             nodes {
               id
@@ -100,6 +112,12 @@ export async function GET() {
       return NextResponse.json({ error: 'Projeto não encontrado' }, { status: 404 })
     }
 
+    // Extract Status field options (columns) in the exact order from GitHub
+    const statusField = project.fields?.nodes?.find(
+      (f: any) => f.name?.toLowerCase() === 'status' && f.options
+    )
+    const githubColumns: string[] = statusField?.options?.map((o: any) => o.name) || []
+
     // Parse items into cards
     const cards = project.items.nodes.map((item: any) => {
       const content = item.content || {}
@@ -147,7 +165,7 @@ export async function GET() {
       }
     })
 
-    return NextResponse.json({ projectTitle: project.title, cards })
+    return NextResponse.json({ projectTitle: project.title, columns: githubColumns, cards })
   } catch (error) {
     console.error('[v0] Error fetching GitHub project:', error)
     return NextResponse.json({ error: 'Erro ao buscar projeto do GitHub' }, { status: 500 })
