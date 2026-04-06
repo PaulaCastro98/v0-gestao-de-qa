@@ -260,11 +260,10 @@ export default function TestCasesPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-3 font-medium text-sm border-b-2 transition ${
-                  activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
-                }`}
+                className={`px-4 py-3 font-medium text-sm border-b-2 transition ${activeTab === tab.id
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+                  }`}
               >
                 {tab.label}
               </button>
@@ -388,7 +387,8 @@ export default function TestCasesPage() {
                 <div className="space-y-2">
                   {formData.steps.map((step, idx) => (
                     <div key={idx} className="flex items-center gap-2">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-xs font-semibold text-gray-600 flex-shrink-0">
+                      // ✅ Depois
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-xs font-semibold text-gray-600 shrink-0">
                         {idx + 1}
                       </div>
                       <Input
@@ -402,7 +402,7 @@ export default function TestCasesPage() {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="flex-shrink-0 text-gray-400 hover:text-red-500"
+                          className="shrink-0 text-gray-400 hover:text-red-500"
                           onClick={() => removeStep(idx)}
                         >
                           <Trash2 className="w-4 h-4" />
