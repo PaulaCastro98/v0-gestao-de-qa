@@ -15,15 +15,29 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { title, description, severity, priority, status, sprint_release, project_id, created_by } = await request.json()
+    const { 
+      title, description, severity, priority, status, sprint_release, 
+      feature_story, suite_id, steps, expected_result, actual_result, 
+      comments, adjustment, project_id, created_by 
+    } = await request.json()
 
     if (!title) {
       return NextResponse.json({ error: 'Título é obrigatório' }, { status: 400 })
     }
 
     const bug = await sql`
-      INSERT INTO bugs (title, description, severity, priority, status, sprint_release, project_id, created_by, created_at, updated_at)
-      VALUES (${title}, ${description || null}, ${severity || 'Média'}, ${priority || 'Média'}, ${status || 'Aberto'}, ${sprint_release || null}, ${project_id || null}, ${created_by || null}, NOW(), NOW())
+      INSERT INTO bugs (
+        title, description, severity, priority, status, sprint_release,
+        feature_story, suite_id, steps, expected_result, actual_result,
+        comments, adjustment, project_id, created_by, created_at, updated_at
+      )
+      VALUES (
+        ${title}, ${description || null}, ${severity || 'Média'}, ${priority || 'Média'}, 
+        ${status || 'Aberto'}, ${sprint_release || null}, ${feature_story || null},
+        ${suite_id || null}, ${steps || null}, ${expected_result || null}, 
+        ${actual_result || null}, ${comments || null}, ${adjustment || null},
+        ${project_id || null}, ${created_by || null}, NOW(), NOW()
+      )
       RETURNING *
     `
 
@@ -36,11 +50,29 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const { id, title, description, severity, priority, status, sprint_release } = await request.json()
+    const { 
+      id, title, description, severity, priority, status, sprint_release,
+      feature_story, suite_id, steps, expected_result, actual_result,
+      comments, adjustment
+    } = await request.json()
 
     const bug = await sql`
       UPDATE bugs 
-      SET title = ${title}, description = ${description}, severity = ${severity}, priority = ${priority}, status = ${status}, sprint_release = ${sprint_release}, updated_at = NOW()
+      SET 
+        title = ${title}, 
+        description = ${description}, 
+        severity = ${severity}, 
+        priority = ${priority}, 
+        status = ${status}, 
+        sprint_release = ${sprint_release},
+        feature_story = ${feature_story},
+        suite_id = ${suite_id},
+        steps = ${steps},
+        expected_result = ${expected_result},
+        actual_result = ${actual_result},
+        comments = ${comments},
+        adjustment = ${adjustment},
+        updated_at = NOW()
       WHERE id = ${id}
       RETURNING *
     `
