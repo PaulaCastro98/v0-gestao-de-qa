@@ -63,8 +63,8 @@ export async function POST(request: NextRequest) {
       type,
       pre_condition,
       post_condition,
-      steps,
-      expected_result,
+      steps, // Will be stored in test_case_steps table
+      expected_result, // Will be stored in test_case_steps table
       suite_id,
       severity,
       automation_status,
@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Título é obrigatório' }, { status: 400 })
     }
 
+    // Insert test case (without steps - those go in test_case_steps table)
     const resultado = await sql`
       INSERT INTO test_cases (
         title,
@@ -89,8 +90,6 @@ export async function POST(request: NextRequest) {
         type,
         pre_condition,
         post_condition,
-        steps,
-        expected_result,
         suite_id,
         severity,
         automation_status,
@@ -98,8 +97,6 @@ export async function POST(request: NextRequest) {
         layer,
         milestone,
         tags,
-        project_id,
-        created_by,
         created_at,
         updated_at
       ) VALUES (
@@ -110,8 +107,6 @@ export async function POST(request: NextRequest) {
         ${type || 'Funcional'},
         ${pre_condition || null},
         ${post_condition || null},
-        ${steps || null},
-        ${expected_result || null},
         ${suite_id || null},
         ${severity || null},
         ${automation_status || 'Manual'},
@@ -119,15 +114,28 @@ export async function POST(request: NextRequest) {
         ${layer || null},
         ${milestone || null},
         ${tags || null},
-        ${project_id || null},
-        ${created_by || null},
         NOW(),
         NOW()
       )
       RETURNING *
     `
 
-    return NextResponse.json(resultado[0], { status: 201 })
+    const testCase = resultado[0]
+
+    // Insert steps into test_case_steps table if provided
+    if (steps && Array.isArray(steps) && steps.length > 0) {
+      for (let i = 0; i < steps.length; i++) {
+        const stepText = steps[i]
+        if (stepText && stepText.trim()) {
+          await sql`
+            INSERT INTO test_case_steps (test_case_id, step_number, action, expected_result, created_at)
+            VALUES (${testCase.id}, ${i + 1}, ${stepText}, ${i === steps.length - 1 ? expected_result : null}, NOW())
+          `
+        }
+      }
+    }
+
+    return NextResponse.json(testCase, { status: 201 })
   } catch (error) {
     console.error('Erro ao criar caso de teste:', error)
     return NextResponse.json(
