@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     if (periodo) {
       const hoje = new Date()
-      let dataInicio = new Date()
+      const dataInicio = new Date()
 
       if (periodo === '7dias') {
         dataInicio.setDate(hoje.getDate() - 7)
@@ -46,7 +46,10 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Erro ao buscar casos de teste:', error)
     return NextResponse.json(
-      { error: 'Erro ao buscar casos de teste' },
+      {
+        error: 'Erro ao buscar casos de teste',
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     )
   }
@@ -63,8 +66,8 @@ export async function POST(request: NextRequest) {
       type,
       pre_condition,
       post_condition,
-      steps, // Will be stored in test_case_steps table
-      expected_result, // Will be stored in test_case_steps table
+      steps,
+      expected_result,
       suite_id,
       severity,
       automation_status,
@@ -72,15 +75,16 @@ export async function POST(request: NextRequest) {
       layer,
       milestone,
       tags,
-      project_id,
-      created_by,
     } = data
 
     if (!title) {
-      return NextResponse.json({ error: 'Título é obrigatório' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Título é obrigatório' },
+        { status: 400 }
+      )
     }
 
-    // Insert test case (without steps - those go in test_case_steps table)
+    // ✅ Insere o test case com apenas os campos essenciais primeiro
     const resultado = await sql`
       INSERT INTO test_cases (
         title,
@@ -101,19 +105,19 @@ export async function POST(request: NextRequest) {
         updated_at
       ) VALUES (
         ${title},
-        ${description || null},
-        ${priority || 'Média'},
-        ${status || 'Não Iniciado'},
-        ${type || 'Funcional'},
-        ${pre_condition || null},
-        ${post_condition || null},
-        ${suite_id || null},
-        ${severity || null},
-        ${automation_status || 'Manual'},
-        ${behavior || null},
-        ${layer || null},
-        ${milestone || null},
-        ${tags || null},
+        ${description ?? null},
+        ${priority ?? 'Média'},
+        ${status ?? 'Pendente'},
+        ${type ?? 'Funcional'},
+        ${pre_condition ?? null},
+        ${post_condition ?? null},
+        ${suite_id ?? null},
+        ${severity ?? null},
+        ${automation_status ?? 'Manual'},
+        ${behavior ?? null},
+        ${layer ?? null},
+        ${milestone ?? null},
+        ${tags ?? null},
         NOW(),
         NOW()
       )
@@ -122,16 +126,32 @@ export async function POST(request: NextRequest) {
 
     const testCase = resultado[0]
 
-    // Insert steps into test_case_steps table if provided
+    // ✅ Insere steps apenas se a tabela existir e steps forem fornecidos
     if (steps && Array.isArray(steps) && steps.length > 0) {
-      for (let i = 0; i < steps.length; i++) {
-        const stepText = steps[i]
-        if (stepText && stepText.trim()) {
-          await sql`
-            INSERT INTO test_case_steps (test_case_id, step_number, action, expected_result, created_at)
-            VALUES (${testCase.id}, ${i + 1}, ${stepText}, ${i === steps.length - 1 ? expected_result : null}, NOW())
-          `
+      try {
+        for (let i = 0; i < steps.length; i++) {
+          const stepText = steps[i]
+          if (stepText && stepText.trim()) {
+            await sql`
+              INSERT INTO test_case_steps (
+                test_case_id,
+                step_number,
+                action,
+                expected_result,
+                created_at
+              ) VALUES (
+                ${testCase.id},
+                ${i + 1},
+                ${stepText},
+                ${i === steps.length - 1 ? (expected_result ?? null) : null},
+                NOW()
+              )
+            `
+          }
         }
+      } catch (stepsError) {
+        // ⚠️ Se falhar nos steps, loga mas não desfaz o test case criado
+        console.error('Erro ao inserir steps (test case foi criado):', stepsError)
       }
     }
 
@@ -139,7 +159,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Erro ao criar caso de teste:', error)
     return NextResponse.json(
-      { error: 'Erro ao criar caso de teste' },
+      {
+        error: 'Erro ao criar caso de teste',
+        details: error instanceof Error ? error.message : String(error), // 👈 mostra o erro real
+      },
       { status: 500 }
     )
   }
