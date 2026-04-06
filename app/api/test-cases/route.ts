@@ -3,23 +3,25 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const sql = neon(process.env.DATABASE_URL!)
 
+// ✅ Valores aceitos pelo banco (constraints)
+const VALID_STATUS = ['Pendente', 'Em andamento', 'Aprovado', 'Reprovado', 'Bloqueado']
+const VALID_TYPE = ['Funcional', 'Integração', 'Regressão', 'Smoke', 'Performance', 'Segurança']
+const VALID_PRIORITY = ['Baixa', 'Média', 'Alta', 'Crítica']
+const VALID_BEHAVIOR = ['Não definido', 'Positivo', 'Negativo', 'Destrutivo']
+const VALID_SEVERITY = ['Bloqueador', 'Crítico', 'Maior', 'Menor', 'Trivial']
+const VALID_AUTOMATION = ['Manual', 'A automatizar', 'Automatizado']
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
-    const sprint = searchParams.get('sprint')
     const statusTeste = searchParams.get('status')
     const periodo = searchParams.get('periodo')
 
     let query = 'SELECT * FROM test_cases WHERE 1=1'
     const params: (string | null)[] = []
 
-    if (sprint) {
-      query += ' AND sprint = $' + (params.length + 1)
-      params.push(sprint)
-    }
-
     if (statusTeste) {
-      query += ' AND status_teste = $' + (params.length + 1)
+      query += ' AND status = $' + (params.length + 1)
       params.push(statusTeste)
     }
 
@@ -75,6 +77,7 @@ export async function POST(request: NextRequest) {
       layer,
       milestone,
       tags,
+      created_by,
     } = data
 
     if (!title) {
@@ -84,7 +87,22 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // ✅ Insere o test case com apenas os campos essenciais primeiro
+    // ✅ Valida e aplica defaults seguros para cada campo com constraint
+    const safeStatus = VALID_STATUS.includes(status) ? status : 'Pendente'
+    const safeType = VALID_TYPE.includes(type) ? type : 'Funcional'
+    const safePriority = VALID_PRIORITY.includes(priority) ? priority : null
+    const safeBehavior = VALID_BEHAVIOR.includes(behavior) ? behavior : null
+    const safeSeverity = VALID_SEVERITY.includes(severity) ? severity : null
+    const safeAutomation = VALID_AUTOMATION.includes(automation_status) ? automation_status : 'Manual'
+
+    // ✅ Converte tags para array (aceita string "tag1, tag2" ou array)
+    let tagsArray: string[] = []
+    if (Array.isArray(tags)) {
+      tagsArray = tags.filter(Boolean)
+    } else if (typeof tags === 'string' && tags.trim()) {
+      tagsArray = tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+    }
+
     const resultado = await sql`
       INSERT INTO test_cases (
         title,
@@ -101,23 +119,25 @@ export async function POST(request: NextRequest) {
         layer,
         milestone,
         tags,
+        created_by,
         created_at,
         updated_at
       ) VALUES (
         ${title},
         ${description ?? null},
-        ${priority ?? 'Média'},
-        ${status ?? 'Pendente'},
-        ${type ?? 'Funcional'},
+        ${safePriority},
+        ${safeStatus},
+        ${safeType},
         ${pre_condition ?? null},
         ${post_condition ?? null},
         ${suite_id ?? null},
-        ${severity ?? null},
-        ${automation_status ?? 'Manual'},
-        ${behavior ?? null},
+        ${safeSeverity},
+        ${safeAutomation},
+        ${safeBehavior},
         ${layer ?? null},
         ${milestone ?? null},
-        ${tags ?? null},
+        ${tagsArray},
+        ${created_by ?? null},
         NOW(),
         NOW()
       )
@@ -126,7 +146,7 @@ export async function POST(request: NextRequest) {
 
     const testCase = resultado[0]
 
-    // ✅ Insere steps apenas se a tabela existir e steps forem fornecidos
+    // ✅ Insere steps em try/catch separado para não reverter o test case
     if (steps && Array.isArray(steps) && steps.length > 0) {
       try {
         for (let i = 0; i < steps.length; i++) {
@@ -150,7 +170,6 @@ export async function POST(request: NextRequest) {
           }
         }
       } catch (stepsError) {
-        // ⚠️ Se falhar nos steps, loga mas não desfaz o test case criado
         console.error('Erro ao inserir steps (test case foi criado):', stepsError)
       }
     }
@@ -161,7 +180,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'Erro ao criar caso de teste',
-        details: error instanceof Error ? error.message : String(error), // 👈 mostra o erro real
+        details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     )
