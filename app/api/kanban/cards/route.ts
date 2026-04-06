@@ -50,12 +50,21 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const { cardId, title, description, columnId, position, responsaveis, prioridadeNum, sprintNum, estimativa, tipoTrabalho } = await request.json()
+    const body = await request.json()
+    console.log('[v0] PUT /api/kanban/cards body:', JSON.stringify(body))
+    const { cardId, title, description, columnId, position, responsaveis, prioridadeNum, sprintNum, estimativa, tipoTrabalho } = body
+    
+    // Validação: title é obrigatório
+    if (!title || !title.trim()) {
+      console.log('[v0] PUT validation failed: title is required')
+      return NextResponse.json({ error: 'Título é obrigatório' }, { status: 400 })
+    }
+    
     const card = await sql`
       UPDATE kanban_cards 
       SET 
         title = ${title},
-        description = ${description},
+        description = ${description || null},
         column_id = ${columnId}, 
         position = ${position},
         responsaveis = ${toPgArray(responsaveis)},
