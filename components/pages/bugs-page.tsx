@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,7 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/hooks/use-toast'
-import { Plus, Pencil, Trash2, Bug, GripVertical } from 'lucide-react'
+import { Plus, Pencil, Trash2, Bug, X } from 'lucide-react'
+import MDEditor from '@uiw/react-md-editor'
+import '@uiw/react-md-editor/markdown-editor.css'
+import '@uiw/react-markdown-preview/markdown.css'
 
 const SEVERITIES = ['Baixa', 'Média', 'Alta', 'Crítica']
 const PRIORITIES = ['Baixa', 'Média', 'Alta', 'Urgente']
@@ -20,12 +23,14 @@ const STATUSES = ['Aberto', 'Em Análise', 'Em Correção', 'Resolvido', 'Fechad
 const emptyForm = {
   title: '',
   feature_story: '',
+  linked_card_id: '',
   suite_id: '',
   severity: 'Média',
   priority: 'Média',
   status: 'Aberto',
   sprint_release: '',
   description: '',
+  description_markdown: '',
   steps: [''] as string[],
   expected_result: '',
   actual_result: '',
@@ -36,16 +41,25 @@ const emptyForm = {
 export default function BugsPage() {
   const [bugs, setBugs] = useState<any[]>([])
   const [suites, setSuites] = useState<any[]>([])
+  const [kanbanCards, setKanbanCards] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingBug, setEditingBug] = useState<any>(null)
   const [formData, setFormData] = useState({ ...emptyForm })
+  const [cardSearch, setCardSearch] = useState('')
+  const [showCardDropdown, setShowCardDropdown] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
     fetchBugs()
     fetchSuites()
   }, [])
+
+  useEffect(() => {
+    if (showModal) {
+      fetchKanbanCards()
+    }
+  }, [showModal])
 
   const fetchBugs = async () => {
     try {
@@ -63,12 +77,25 @@ export default function BugsPage() {
     try {
       const res = await fetch('/api/test-suites')
       if (res.ok) setSuites(await res.json())
-    } catch { }
+    } catch {}
+  }
+
+  const fetchKanbanCards = async () => {
+    try {
+      const res = await fetch('/api/kanban/cards/all')
+      if (res.ok) {
+        const cards = await res.json()
+        setKanbanCards(cards)
+      }
+    } catch (error) {
+      console.error('[v0] Error fetching kanban cards:', error)
+    }
   }
 
   const openCreate = () => {
     setEditingBug(null)
-    setFormData({ ...emptyForm, steps: [''] })
+    setFormData({ ...emptyForm })
+    setCardSearch('')
     setShowModal(true)
   }
 
@@ -77,18 +104,21 @@ export default function BugsPage() {
     setFormData({
       title: bug.title || '',
       feature_story: bug.feature_story || '',
+      linked_card_id: bug.linked_card_id?.toString() || '',
       suite_id: bug.suite_id?.toString() || '',
       severity: bug.severity || 'Média',
       priority: bug.priority || 'Média',
       status: bug.status || 'Aberto',
       sprint_release: bug.sprint_release || '',
       description: bug.description || '',
+      description_markdown: bug.description_markdown || '',
       steps: bug.steps?.length ? bug.steps : [''],
       expected_result: bug.expected_result || '',
       actual_result: bug.actual_result || '',
       comments: bug.comments || '',
       adjustment: bug.adjustment || '',
     })
+    setCardSearch('')
     setShowModal(true)
   }
 
@@ -111,6 +141,24 @@ export default function BugsPage() {
       steps: prev.steps.filter((_, i) => i !== index),
     }))
 
+  const handleSelectCard = (card: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      feature_story: card.title,
+      linked_card_id: card.id.toString(),
+    }))
+    setCardSearch('')
+    setShowCardDropdown(false)
+  }
+
+  const filteredCards = useMemo(() => {
+    if (!cardSearch.trim()) return []
+    return kanbanCards.filter((card) =>
+      card.title.toLowerCase().includes(cardSearch.toLowerCase()) ||
+      (card.column?.name || '').toLowerCase().includes(cardSearch.toLowerCase())
+    )
+  }, [cardSearch, kanbanCards])
+
   const handleSubmit = async () => {
     if (!formData.title.trim()) {
       toast({ title: 'Erro', description: 'Título é obrigatório' })
@@ -128,12 +176,14 @@ export default function BugsPage() {
         ...(editingBug && { id: editingBug.id }),
         title: formData.title,
         feature_story: formData.feature_story || null,
+        linked_card_id: formData.linked_card_id ? parseInt(formData.linked_card_id) : null,
         suite_id: formData.suite_id ? parseInt(formData.suite_id) : null,
         severity: formData.severity,
         priority: formData.priority,
         status: formData.status,
         sprint_release: formData.sprint_release || null,
         description: formData.description || null,
+        description_markdown: formData.description_markdown || null,
         steps: formData.steps.filter(s => s.trim()),
         expected_result: formData.expected_result || null,
         actual_result: formData.actual_result || null,
@@ -262,14 +312,52 @@ export default function BugsPage() {
               />
             </div>
 
-            {/* Feature / Historia */}
-            <div className="space-y-1.5">
-              <Label>Feature / História</Label>
-              <Input
-                placeholder="Ex: Login, Checkout, Dashboard..."
-                value={formData.feature_story}
-                onChange={(e) => setField('feature_story', e.target.value)}
-              />
+            {/* Feature com Autocomplete */}
+            <div className="space-y-1.5 relative">
+              <Label>Feature / História (Cards do Kanban)</Label>
+              <div className="relative">
+                <Input
+                  placeholder="Busque um card do kanban ou digite livremente"
+                  value={cardSearch || formData.feature_story}
+                  onChange={(e) => {
+                    setCardSearch(e.target.value)
+                    setShowCardDropdown(true)
+                  }}
+                  onFocus={() => setShowCardDropdown(true)}
+                />
+                {formData.linked_card_id && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                    onClick={() => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        feature_story: '',
+                        linked_card_id: '',
+                      }))
+                      setCardSearch('')
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+
+              {showCardDropdown && filteredCards.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                  {filteredCards.map((card) => (
+                    <button
+                      key={card.id}
+                      onClick={() => handleSelectCard(card)}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 border-b last:border-0"
+                    >
+                      <div className="font-medium text-sm">{card.title}</div>
+                      <div className="text-xs text-gray-500">{card.column?.name || 'Sem coluna'}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Test Suite */}
@@ -332,9 +420,26 @@ export default function BugsPage() {
 
             <Separator />
 
-            {/* Descrição */}
+            {/* Editor Markdown */}
             <div className="space-y-1.5">
-              <Label>Descrição</Label>
+              <Label>Descrição (Markdown Rico)</Label>
+              <div data-color-mode="light" className="border rounded-lg overflow-hidden">
+                <MDEditor
+                  value={formData.description_markdown}
+                  onChange={(val) => setField('description_markdown', val || '')}
+                  preview="live"
+                  height={200}
+                  visibleDragbar={false}
+                  textareaProps={{
+                    placeholder: 'Digite a descrição em Markdown...',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Descrição simples */}
+            <div className="space-y-1.5">
+              <Label>Descrição (Texto Simples)</Label>
               <Textarea
                 placeholder="Contexto geral do bug..."
                 value={formData.description}
@@ -355,8 +460,7 @@ export default function BugsPage() {
               <div className="space-y-2">
                 {formData.steps.map((step, idx) => (
                   <div key={idx} className="flex items-center gap-2">
-                   // ✅ Depois
-                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-xs font-semibold text-gray-600 shrink-0">
+                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-xs font-semibold text-gray-600 flex-shrink-0">
                       {idx + 1}
                     </div>
                     <Input
@@ -370,8 +474,7 @@ export default function BugsPage() {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        // ✅ Depois
-                        className="shrink-0 text-gray-400 hover:text-red-500"
+                        className="flex-shrink-0 text-gray-400 hover:text-red-500"
                         onClick={() => removeStep(idx)}
                       >
                         <Trash2 className="w-4 h-4" />

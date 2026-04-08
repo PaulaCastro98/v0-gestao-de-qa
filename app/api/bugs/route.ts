@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     const {
       title, description, severity, priority, status, sprint_release,
       feature_story, suite_id, steps, expected_result, actual_result,
-      comments, adjustment, project_id, created_by
+      comments, adjustment, project_id, created_by, linked_card_id, description_markdown
     } = body
 
     if (!title?.trim()) {
@@ -73,7 +73,8 @@ export async function POST(request: NextRequest) {
       INSERT INTO bugs (
         title, description, severity, priority, status, sprint_release,
         feature_story, suite_id, steps, expected_result, actual_result,
-        comments, adjustment, project_id, created_by, created_at, updated_at
+        comments, adjustment, project_id, created_by, linked_card_id, description_markdown,
+        created_at, updated_at
       )
       VALUES (
         ${title.trim()},
@@ -91,6 +92,8 @@ export async function POST(request: NextRequest) {
         ${adjustment?.trim() || null},
         ${project_id ? Number(project_id) : null},
         ${created_by ? Number(created_by) : null},
+        ${linked_card_id ? Number(linked_card_id) : null},
+        ${description_markdown || null},
         NOW(),
         NOW()
       )
@@ -113,7 +116,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const { id, title, description, severity, priority, status, sprint_release,
       feature_story, suite_id, steps, expected_result, actual_result,
-      comments, adjustment } = body
+      comments, adjustment, linked_card_id, description_markdown } = body
 
     if (!id) {
       return NextResponse.json({ error: 'ID é obrigatório' }, { status: 400 })
@@ -172,6 +175,8 @@ export async function PUT(request: NextRequest) {
         actual_result   = ${actual_result?.trim() || null},
         comments        = ${comments?.trim() || null},
         adjustment      = ${adjustment?.trim() || null},
+        linked_card_id  = ${linked_card_id ? Number(linked_card_id) : null},
+        description_markdown = ${description_markdown || null},
         updated_at      = NOW()
       WHERE id = ${Number(id)}
       RETURNING *
