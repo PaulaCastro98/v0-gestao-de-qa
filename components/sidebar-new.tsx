@@ -60,22 +60,32 @@ export default function SidebarNew({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-background">
+      {/* Sidebar */}
       <div
         className={`${
-          open ? 'w-64' : 'w-20'
-        } bg-slate-900 text-white transition-all duration-300 flex flex-col`}
+          open ? 'w-72' : 'w-20'
+        } bg-gradient-to-b from-background to-muted border-r border-border transition-all duration-300 flex flex-col`}
       >
-        <div className="p-4 flex items-center justify-between border-b border-slate-700">
-          {open && <h1 className="font-bold text-lg">QA Manager</h1>}
+        {/* Header */}
+        <div className="p-4 flex items-center justify-between border-b border-border/50">
+          {open && (
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center font-bold text-primary-foreground text-sm">
+                QA
+              </div>
+              <span className="font-bold text-foreground">QA Manager</span>
+            </div>
+          )}
           <button
             onClick={() => setOpen(!open)}
-            className="p-1 hover:bg-slate-800 rounded"
+            className="p-2 hover:bg-muted/50 rounded-lg transition-colors"
           >
-            {open ? <X size={20} /> : <Menu size={20} />}
+            {open ? <X size={20} className="text-muted-foreground" /> : <Menu size={20} className="text-muted-foreground" />}
           </button>
         </div>
 
+        {/* Navigation */}
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon
@@ -84,39 +94,39 @@ export default function SidebarNew({ children }: { children: React.ReactNode }) 
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-2 rounded transition ${
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 ${
                   isActive
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-300 hover:bg-slate-800'
+                    ? 'bg-gradient-to-r from-primary to-secondary text-primary-foreground shadow-lg shadow-primary/30'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 }`}
               >
                 <Icon size={20} />
-                {open && <span>{item.label}</span>}
+                {open && <span className="text-sm font-medium">{item.label}</span>}
               </Link>
             )
           })}
 
           {/* Projects Section */}
           {open && projects.length > 0 && (
-            <div className="pt-4 border-t border-slate-700 mt-4">
+            <div className="pt-6 mt-4 border-t border-border/50">
               <button
                 onClick={() => setProjectsOpen(!projectsOpen)}
-                className="flex items-center gap-2 w-full px-4 py-2 text-gray-400 text-xs uppercase tracking-wider hover:text-gray-200 transition"
+                className="flex items-center gap-2 w-full px-4 py-2 text-muted-foreground text-xs uppercase tracking-wider hover:text-foreground transition-colors font-semibold"
               >
                 {projectsOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 Projetos
               </button>
               {projectsOpen && (
-                <div className="mt-1 space-y-1">
+                <div className="mt-3 space-y-1">
                   {projects.map((project) => (
                     <Link
                       key={project.id}
                       href={`/projetos?id=${project.id}`}
                       onClick={() => setActiveProjectId(project.id)}
-                      className={`flex items-center gap-3 px-4 py-2 rounded text-sm transition ${
+                      className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-all ${
                         activeProjectId === project.id
-                          ? 'bg-blue-600/50 text-white'
-                          : 'text-gray-400 hover:bg-slate-800 hover:text-gray-200'
+                          ? 'bg-primary/20 text-primary border border-primary/30'
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                       }`}
                     >
                       <FolderKanban size={16} />
@@ -129,19 +139,20 @@ export default function SidebarNew({ children }: { children: React.ReactNode }) 
           )}
         </nav>
 
-        <div className="p-4 border-t border-slate-700">
-          <Button
+        {/* Logout Button */}
+        <div className="p-4 border-t border-border/50">
+          <button
             onClick={handleLogout}
-            variant="ghost"
-            className="w-full text-red-400 hover:text-red-300 justify-start"
+            className="flex items-center gap-3 w-full px-4 py-2.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-200"
           >
             <LogOut size={20} />
-            {open && <span className="ml-3">Sair</span>}
-          </Button>
+            {open && <span className="text-sm font-medium">Sair</span>}
+          </button>
         </div>
       </div>
 
-      <main className="flex-1 overflow-auto">{children}</main>
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto bg-background">{children}</main>
     </div>
   )
 }

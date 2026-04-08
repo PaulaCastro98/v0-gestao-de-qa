@@ -1,17 +1,20 @@
 @import 'tailwindcss';
 
 @theme inline {
-  --color-background: 0 0% 100%;
-  --color-foreground: 0 0% 0%;
-  --color-primary: 0 0% 0%;
+  /* Modern Dark Blue + Purple SaaS Palette */
+  --color-background: 17 26% 7%;
+  --color-foreground: 0 0% 100%;
+  --color-primary: 217 100% 55%;
   --color-primary-foreground: 0 0% 100%;
-  --color-secondary: 0 0% 90%;
-  --color-secondary-foreground: 0 0% 0%;
+  --color-secondary: 264 70% 50%;
+  --color-secondary-foreground: 0 0% 100%;
   --color-accent: 59 84% 52%;
-  --color-accent-foreground: 0 0% 100%;
-  --color-muted: 0 0% 96%;
-  --color-muted-foreground: 0 0% 40%;
-  --color-border: 0 0% 90%;
+  --color-accent-foreground: 0 0% 0%;
+  --color-muted: 217 32% 20%;
+  --color-muted-foreground: 220 13% 70%;
+  --color-border: 217 32% 17%;
+  
+  --font-sans: 'Inter', 'Helvetica Neue', sans-serif;
 }
 
 @layer base {
@@ -22,5 +25,37 @@
 
   * {
     @apply border-border;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary;
+  }
+
+  /* Input styling */
+  input, textarea, select {
+    @apply bg-muted/50 border border-border rounded-lg px-3 py-2 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all;
+  }
+
+  /* Button styling */
+  button {
+    @apply transition-all duration-200;
+  }
+
+  /* Link styling */
+  a {
+    @apply text-primary hover:text-primary/80 transition-colors;
   }
 }
