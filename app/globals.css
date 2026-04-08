@@ -1,44 +1,26 @@
 @import 'tailwindcss';
 
-@layer theme {
-  :root {
-    --color-background: 0 0% 100%;
-    --color-foreground: 0 0% 0%;
-    --color-primary: 0 0% 0%;
-    --color-primary-foreground: 0 0% 100%;
-    --color-secondary: 0 0% 90%;
-    --color-secondary-foreground: 0 0% 0%;
-    --color-accent: 59 84% 52%;
-    --color-accent-foreground: 0 0% 100%;
-    --color-muted: 0 0% 96%;
-    --color-muted-foreground: 0 0% 40%;
-    --color-border: 0 0% 90%;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --color-background: 0 0% 5%;
-      --color-foreground: 0 0% 95%;
-      --color-primary: 0 0% 100%;
-      --color-primary-foreground: 0 0% 0%;
-      --color-secondary: 0 0% 15%;
-      --color-secondary-foreground: 0 0% 100%;
-      --color-accent: 59 84% 60%;
-      --color-accent-foreground: 0 0% 0%;
-      --color-muted: 0 0% 15%;
-      --color-muted-foreground: 0 0% 60%;
-      --color-border: 0 0% 20%;
-    }
-  }
+@theme inline {
+  --color-background: 0 0% 100%;
+  --color-foreground: 0 0% 0%;
+  --color-primary: 0 0% 0%;
+  --color-primary-foreground: 0 0% 100%;
+  --color-secondary: 0 0% 90%;
+  --color-secondary-foreground: 0 0% 0%;
+  --color-accent: 59 84% 52%;
+  --color-accent-foreground: 0 0% 100%;
+  --color-muted: 0 0% 96%;
+  --color-muted-foreground: 0 0% 40%;
+  --color-border: 0 0% 90%;
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-
   html,
   body {
     @apply bg-background text-foreground;
+  }
+
+  * {
+    @apply border-border;
   }
 }
