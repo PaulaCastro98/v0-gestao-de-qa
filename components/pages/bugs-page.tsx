@@ -293,14 +293,14 @@ export default function BugsPage() {
       )}
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold">
               {editingBug ? 'Editar Bug' : 'Registrar Novo Bug'}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="overflow-y-auto flex-1 space-y-5 pr-1">
+          <div className="overflow-y-auto space-y-5 pr-2" style={{ maxHeight: 'calc(85vh - 140px)' }}>
 
             {/* Título */}
             <div className="space-y-1.5">
@@ -422,30 +422,25 @@ export default function BugsPage() {
 
             {/* Editor Markdown */}
             <div className="space-y-1.5">
-              <Label>Descrição (Markdown Rico)</Label>
-              <div data-color-mode="light" className="border rounded-lg overflow-hidden">
+              <Label>Descrição do Bug</Label>
+              <div data-color-mode="light" className="rounded-lg overflow-hidden">
                 <MDEditor
                   value={formData.description_markdown}
-                  onChange={(val) => setField('description_markdown', val || '')}
-                  preview="live"
-                  height={200}
+                  onChange={(val) => {
+                    setField('description_markdown', val || '')
+                    setField('description', val || '')
+                  }}
+                  preview="edit"
+                  height={180}
                   visibleDragbar={false}
                   textareaProps={{
-                    placeholder: 'Digite a descrição em Markdown...',
+                    placeholder: 'Digite a descrição do bug em Markdown (suporta formatação rica)...',
+                  }}
+                  previewOptions={{
+                    className: 'p-4'
                   }}
                 />
               </div>
-            </div>
-
-            {/* Descrição simples */}
-            <div className="space-y-1.5">
-              <Label>Descrição (Texto Simples)</Label>
-              <Textarea
-                placeholder="Contexto geral do bug..."
-                value={formData.description}
-                onChange={(e) => setField('description', e.target.value)}
-                rows={2}
-              />
             </div>
 
             {/* Passos para reproduzir */}
@@ -530,9 +525,12 @@ export default function BugsPage() {
             </div>
           </div>
 
-          <div className="pt-4 border-t mt-2">
-            <Button onClick={handleSubmit} className="w-full">
+          <div className="flex gap-2 pt-4 border-t mt-4">
+            <Button onClick={handleSubmit} className="flex-1">
               {editingBug ? 'Salvar Alterações' : 'Registrar Bug'}
+            </Button>
+            <Button variant="outline" onClick={() => setShowModal(false)}>
+              Cancelar
             </Button>
           </div>
         </DialogContent>
