@@ -60,28 +60,37 @@ export default function SidebarNew({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen" style={{ backgroundColor: 'var(--color-background)' }}>
       {/* Sidebar */}
       <div
-        className={`${
-          open ? 'w-72' : 'w-20'
-        } bg-gradient-to-b from-background to-muted border-r border-border transition-all duration-300 flex flex-col`}
+        className={`${open ? 'w-72' : 'w-20'} transition-all duration-300 flex flex-col`}
+        style={{ 
+          backgroundColor: 'var(--color-muted)', 
+          borderRight: '1px solid var(--color-border)' 
+        }}
       >
         {/* Header */}
-        <div className="p-4 flex items-center justify-between border-b border-border/50">
+        <div className="p-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--color-border)' }}>
           {open && (
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center font-bold text-primary-foreground text-sm">
+            <div className="flex items-center gap-3">
+              <div 
+                className="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm"
+                style={{ 
+                  background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))',
+                  color: 'white'
+                }}
+              >
                 QA
               </div>
-              <span className="font-bold text-foreground">QA Manager</span>
+              <span className="font-bold text-lg" style={{ color: 'var(--color-foreground)' }}>QA Manager</span>
             </div>
           )}
           <button
             onClick={() => setOpen(!open)}
-            className="p-2 hover:bg-muted/50 rounded-lg transition-colors"
+            className="p-2 rounded-lg transition-colors hover:opacity-80"
+            style={{ backgroundColor: 'var(--color-background)' }}
           >
-            {open ? <X size={20} className="text-muted-foreground" /> : <Menu size={20} className="text-muted-foreground" />}
+            {open ? <X size={20} style={{ color: 'var(--color-muted-foreground)' }} /> : <Menu size={20} style={{ color: 'var(--color-muted-foreground)' }} />}
           </button>
         </div>
 
@@ -94,11 +103,14 @@ export default function SidebarNew({ children }: { children: React.ReactNode }) 
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 ${
-                  isActive
-                    ? 'bg-gradient-to-r from-primary to-secondary text-primary-foreground shadow-lg shadow-primary/30'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                }`}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200"
+                style={isActive ? {
+                  background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))',
+                  color: 'white',
+                  boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)'
+                } : {
+                  color: 'var(--color-muted-foreground)',
+                }}
               >
                 <Icon size={20} />
                 {open && <span className="text-sm font-medium">{item.label}</span>}
@@ -108,10 +120,11 @@ export default function SidebarNew({ children }: { children: React.ReactNode }) 
 
           {/* Projects Section */}
           {open && projects.length > 0 && (
-            <div className="pt-6 mt-4 border-t border-border/50">
+            <div className="pt-6 mt-4" style={{ borderTop: '1px solid var(--color-border)' }}>
               <button
                 onClick={() => setProjectsOpen(!projectsOpen)}
-                className="flex items-center gap-2 w-full px-4 py-2 text-muted-foreground text-xs uppercase tracking-wider hover:text-foreground transition-colors font-semibold"
+                className="flex items-center gap-2 w-full px-4 py-2 text-xs uppercase tracking-wider transition-colors font-semibold"
+                style={{ color: 'var(--color-muted-foreground)' }}
               >
                 {projectsOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 Projetos
@@ -123,11 +136,14 @@ export default function SidebarNew({ children }: { children: React.ReactNode }) 
                       key={project.id}
                       href={`/projetos?id=${project.id}`}
                       onClick={() => setActiveProjectId(project.id)}
-                      className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-all ${
-                        activeProjectId === project.id
-                          ? 'bg-primary/20 text-primary border border-primary/30'
-                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                      }`}
+                      className="flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-all"
+                      style={activeProjectId === project.id ? {
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        color: 'var(--color-primary)',
+                        border: '1px solid rgba(59, 130, 246, 0.3)'
+                      } : {
+                        color: 'var(--color-muted-foreground)'
+                      }}
                     >
                       <FolderKanban size={16} />
                       <span className="truncate">{project.name}</span>
@@ -140,10 +156,11 @@ export default function SidebarNew({ children }: { children: React.ReactNode }) 
         </nav>
 
         {/* Logout Button */}
-        <div className="p-4 border-t border-border/50">
+        <div className="p-4" style={{ borderTop: '1px solid var(--color-border)' }}>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-4 py-2.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-200"
+            className="flex items-center gap-3 w-full px-4 py-2.5 rounded-lg transition-all duration-200 hover:opacity-80"
+            style={{ color: 'var(--color-muted-foreground)' }}
           >
             <LogOut size={20} />
             {open && <span className="text-sm font-medium">Sair</span>}
@@ -152,7 +169,7 @@ export default function SidebarNew({ children }: { children: React.ReactNode }) 
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto bg-background">{children}</main>
+      <main className="flex-1 overflow-auto" style={{ backgroundColor: 'var(--color-background)' }}>{children}</main>
     </div>
   )
 }

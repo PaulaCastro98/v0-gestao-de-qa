@@ -7,9 +7,15 @@ function Card({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="card"
       className={cn(
-        'bg-gradient-to-br from-muted/50 to-background border border-border/50 rounded-xl shadow-md hover:shadow-lg hover:border-border transition-all duration-200 flex flex-col gap-6 py-6 backdrop-blur-sm',
+        'rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex flex-col gap-4 p-6',
         className,
       )}
+      style={{
+        backgroundColor: 'var(--color-card)',
+        borderColor: 'var(--color-border)',
+        borderWidth: '1px',
+        color: 'var(--color-card-foreground)',
+      }}
       {...props}
     />
   )
@@ -42,7 +48,8 @@ function CardDescription({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-description"
-      className={cn('text-muted-foreground text-sm', className)}
+      className={cn('text-sm', className)}
+      style={{ color: 'var(--color-muted-foreground)' }}
       {...props}
     />
   )
