@@ -49,16 +49,35 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background px-4">
+    <main 
+      className="min-h-screen flex items-center justify-center px-4"
+      style={{ backgroundColor: 'var(--color-background)' }}
+    >
       <Card className="w-full max-w-md">
         <div className="p-8">
-          <h1 className="text-2xl font-bold mb-2">Acesso ao Sistema</h1>
-          <p className="text-muted-foreground mb-6">
-            Sistema de Gestão de Casos de Teste QA
-          </p>
+          <div className="flex items-center gap-3 mb-6">
+            <div 
+              className="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm"
+              style={{ 
+                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                color: 'white'
+              }}
+            >
+              QA
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold" style={{ color: 'var(--color-foreground)' }}>Acesso ao Sistema</h1>
+              <p style={{ color: 'var(--color-muted-foreground)' }} className="text-sm">
+                Sistema de Gestão de QA
+              </p>
+            </div>
+          </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
+            <div 
+              className="mb-4 p-3 rounded-lg text-sm"
+              style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}
+            >
               {error}
             </div>
           )}
@@ -97,13 +116,13 @@ export default function LoginPage() {
 
           <div className="mt-6 space-y-2 text-center text-sm">
             <p>
-              <Link href="/recuperar-senha" className="text-primary hover:underline">
+              <Link href="/recuperar-senha" style={{ color: '#3b82f6' }} className="hover:underline">
                 Esqueceu sua senha?
               </Link>
             </p>
-            <p className="text-muted-foreground">
+            <p style={{ color: 'var(--color-muted-foreground)' }}>
               Ainda nao tem conta?{' '}
-              <Link href="/registro" className="text-primary hover:underline font-medium">
+              <Link href="/registro" style={{ color: '#3b82f6' }} className="hover:underline font-medium">
                 Cadastre-se
               </Link>
             </p>

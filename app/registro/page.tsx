@@ -57,16 +57,35 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background px-4">
+    <main 
+      className="min-h-screen flex items-center justify-center px-4"
+      style={{ backgroundColor: 'var(--color-background)' }}
+    >
       <Card className="w-full max-w-md">
         <div className="p-8">
-          <h1 className="text-2xl font-bold mb-2">Criar Conta</h1>
-          <p className="text-muted-foreground mb-6">
-            Sistema de Gestão de Casos de Teste QA
-          </p>
+          <div className="flex items-center gap-3 mb-6">
+            <div 
+              className="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm"
+              style={{ 
+                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                color: 'white'
+              }}
+            >
+              QA
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold" style={{ color: 'var(--color-foreground)' }}>Criar Conta</h1>
+              <p style={{ color: 'var(--color-muted-foreground)' }} className="text-sm">
+                Sistema de Gestão de QA
+              </p>
+            </div>
+          </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
+            <div 
+              className="mb-4 p-3 rounded-lg text-sm"
+              style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}
+            >
               {error}
             </div>
           )}
@@ -129,9 +148,9 @@ export default function RegisterPage() {
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm">
+          <p className="mt-6 text-center text-sm" style={{ color: 'var(--color-muted-foreground)' }}>
             Já tem conta?{' '}
-            <Link href="/login" className="text-primary hover:underline">
+            <Link href="/login" style={{ color: '#3b82f6' }} className="hover:underline font-medium">
               Faça login
             </Link>
           </p>

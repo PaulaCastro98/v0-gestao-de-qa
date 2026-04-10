@@ -4,15 +4,26 @@ import { Card } from '@/components/ui/card'
 import { ClipboardList, BarChart3, Users, Shield } from 'lucide-react'
 
 export default function Home() {
+  const features = [
+    { icon: ClipboardList, title: 'Casos de Teste', description: 'Crie e gerencie casos de teste estruturados com passos detalhados e resultados esperados', color: '#3b82f6' },
+    { icon: BarChart3, title: 'Relatórios', description: 'Acompanhe métricas, taxa de aprovação e distribuição de casos por sprint', color: '#10b981' },
+    { icon: Shield, title: 'Prioridades', description: 'Organize testes por nível de prioridade e acompanhe defeitos críticos', color: '#f59e0b' },
+    { icon: Users, title: 'Rastreamento', description: 'Atribua testes a analistas e acompanhe o progresso em tempo real', color: '#8b5cf6' },
+  ]
+
   return (
-    // ✅ CORREÇÃO: bg-gradient-to-br → bg-linear-to-br
-    <main className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100">
+    <main className="min-h-screen" style={{ backgroundColor: 'var(--color-background)' }}>
       {/* Header Navigation */}
-      <header className="border-b bg-white shadow-sm">
+      <header style={{ backgroundColor: 'var(--color-muted)', borderBottom: '1px solid var(--color-border)' }}>
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Shield className="h-8 w-8 text-blue-600" />
-            <h1 className="text-2xl font-bold text-slate-900">QA Manager</h1>
+          <div className="flex items-center gap-3">
+            <div 
+              className="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm"
+              style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', color: 'white' }}
+            >
+              QA
+            </div>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--color-foreground)' }}>QA Manager</h1>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/registro">
@@ -26,16 +37,19 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-6 py-16 space-y-12">
-        <div className="text-center space-y-4">
-          <h2 className="text-5xl font-bold text-slate-900">
+      <section className="max-w-7xl mx-auto px-6 py-20 space-y-16">
+        <div className="text-center space-y-6">
+          <h2 
+            className="text-5xl font-bold"
+            style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+          >
             Sistema de Gestão de QA
           </h2>
-          <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+          <p className="text-xl max-w-2xl mx-auto" style={{ color: 'var(--color-muted-foreground)' }}>
             Gerenciamento completo de casos de teste, rastreamento de defeitos e
             métricas de qualidade para equipes de QA
           </p>
-          <div className="flex justify-center gap-3 pt-4">
+          <div className="flex justify-center gap-4 pt-4">
             <Link href="/registro">
               <Button size="lg" variant="outline">Criar Conta</Button>
             </Link>
@@ -46,65 +60,35 @@ export default function Home() {
         </div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 py-12">
-          <Card className="p-6 hover:shadow-lg transition-shadow">
-            <div className="space-y-3">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <ClipboardList className="h-6 w-6 text-blue-600" />
-              </div>
-              <h3 className="font-semibold text-lg">Casos de Teste</h3>
-              <p className="text-slate-600 text-sm">
-                Crie e gerencie casos de teste estruturados com passos
-                detalhados e resultados esperados
-              </p>
-            </div>
-          </Card>
-
-          <Card className="p-6 hover:shadow-lg transition-shadow">
-            <div className="space-y-3">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <BarChart3 className="h-6 w-6 text-green-600" />
-              </div>
-              <h3 className="font-semibold text-lg">Relatórios</h3>
-              <p className="text-slate-600 text-sm">
-                Acompanhe métricas, taxa de aprovação e distribuição de casos
-                por sprint
-              </p>
-            </div>
-          </Card>
-
-          <Card className="p-6 hover:shadow-lg transition-shadow">
-            <div className="space-y-3">
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Shield className="h-6 w-6 text-orange-600" />
-              </div>
-              <h3 className="font-semibold text-lg">Prioridades</h3>
-              <p className="text-slate-600 text-sm">
-                Organize testes por nível de prioridade e acompanhe defeitos
-                críticos
-              </p>
-            </div>
-          </Card>
-
-          <Card className="p-6 hover:shadow-lg transition-shadow">
-            <div className="space-y-3">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Users className="h-6 w-6 text-purple-600" />
-              </div>
-              <h3 className="font-semibold text-lg">Rastreamento</h3>
-              <p className="text-slate-600 text-sm">
-                Atribua testes a analistas e acompanhe o progresso em tempo
-                real
-              </p>
-            </div>
-          </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {features.map((feature, i) => {
+            const Icon = feature.icon
+            return (
+              <Card key={i} className="p-6 hover:shadow-xl transition-all duration-300">
+                <div className="space-y-4">
+                  <div 
+                    className="w-12 h-12 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: `${feature.color}20` }}
+                  >
+                    <Icon className="h-6 w-6" style={{ color: feature.color }} />
+                  </div>
+                  <h3 className="font-semibold text-lg" style={{ color: 'var(--color-foreground)' }}>{feature.title}</h3>
+                  <p className="text-sm" style={{ color: 'var(--color-muted-foreground)' }}>
+                    {feature.description}
+                  </p>
+                </div>
+              </Card>
+            )
+          })}
         </div>
 
         {/* CTA Section */}
-        {/* ✅ CORREÇÃO: bg-gradient-to-r → bg-linear-to-r */}
-        <div className="bg-linear-to-r from-blue-600 to-blue-700 rounded-lg p-12 text-center text-white space-y-4">
-          <h3 className="text-3xl font-bold">Pronto para começar?</h3>
-          <p className="text-lg text-blue-100">
+        <div 
+          className="rounded-xl p-12 text-center space-y-4"
+          style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)' }}
+        >
+          <h3 className="text-3xl font-bold text-white">Pronto para começar?</h3>
+          <p className="text-lg" style={{ color: 'rgba(255,255,255,0.8)' }}>
             Faça login para acessar o sistema de gestão QA
           </p>
           <div className="flex justify-center pt-4">
@@ -118,8 +102,8 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t bg-white mt-16">
-        <div className="max-w-7xl mx-auto px-6 py-8 text-center text-slate-600">
+      <footer style={{ backgroundColor: 'var(--color-muted)', borderTop: '1px solid var(--color-border)' }} className="mt-16">
+        <div className="max-w-7xl mx-auto px-6 py-8 text-center" style={{ color: 'var(--color-muted-foreground)' }}>
           <p>© 2026 QA Manager. Sistema de Gestão de Qualidade.</p>
         </div>
       </footer>
